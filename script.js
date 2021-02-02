@@ -148,15 +148,18 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                             var distFunc = Math.sin(1/(accentuate*((distance * 2 * Math.PI)/diagonal)) + 0.317 + offset);
 
+                            var xRatio = Math.abs((opponent.x - this.x)/((opponent.y - this.y) + (opponent.x - this.x)));
+                            var yRatio = 1 - xRatio;
+
                             if (opponent.morale < (this.morale * 3)) {
 
-                                x +=(this.morale/opponent.morale)*distFunc * xMultiplier;
-                                y += (this.morale/opponent.morale)*distFunc * yMultiplier;
+                                x +=(this.morale/opponent.morale)*distFunc * xMultiplier * xRatio;
+                                y += (this.morale/opponent.morale)*distFunc * yMultiplier * yRatio;
 
                             } else {
 
-                                x -= (opponent.morale/this.morale)*distFunc * xMultiplier;
-                                y -= (opponent.morale/this.morale)*distFunc * yMultiplier;
+                                x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio;
+                                y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio;
                             }
 
                         }
