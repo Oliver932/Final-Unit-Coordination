@@ -3,6 +3,8 @@ var canvas = document.querySelector('canvas');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+var diagonal = Math.sqrt((innerHeight ** 2) + (innerWidth ** 2));
+
 var c = canvas.getContext('2d');
 
 var mouse = {
@@ -33,7 +35,7 @@ addEventListener('click', function(event) {
     }
 
     if (event.shiftKey == true) {
-        units[team].push(new Unit(event.clientX, event.clientY, team, 'Commander', 20, 0, 300, 300));
+        units[team].push(new Unit(event.clientX, event.clientY, team, 'Commander', 20, 1, 300, 300));
     }else {
         units[team].push(new Unit(event.clientX, event.clientY, team, 'Soldier', 10, 3, 100, 100));
     }
@@ -117,6 +119,8 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         var x = 0;
         var y = 0;
 
+        var offset = 0;
+
         for (const team in units) {
             if (Object.hasOwnProperty.call(units, team)) {
 
@@ -126,20 +130,33 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                         
                         var opponent = units[team][i];
-                        console.log(opponent);
+                        var distance = this.distance(opponent.x, opponent.y)
 
-                        if (opponent.morale < (this.morale * 3)) {
+                        if (distance > this.size + opponent.size) {
 
-                            x +=(this.morale/opponent.morale)/(opponent.x - this.x);
-                            y += (this.morale/opponent.morale)/(opponent.y - this.y);
+                            var xMultiplier = 1;
+                            var yMultiplier = 1;
 
-                        } else {
+                            if (opponent.x < this.x) {
+                                xMultiplier = -1
+                            }
+                            
+                            if (opponent.y < this.y) {
+                                yMultiplier = -1
+                            }
 
-                            x -= (opponent.morale/this.morale)/(opponent.x - this.x);
-                            y -= (opponent.morale/this.morale)/(opponent.y - this.y);
+                            if (opponent.morale < (this.morale * 3)) {
+
+                                x +=(this.morale/opponent.morale)*(Math.sin(1/((distance * 2 * Math.PI)/diagonal))) * xMultiplier;
+                                y += (this.morale/opponent.morale)*(Math.sin((distance * 2 * Math.PI)/diagonal)) * yMultiplier;
+
+                            } else {
+
+                                x -= (opponent.morale/this.morale)*(Math.sin((distance * 2 * Math.PI)/diagonal)) * xMultiplier;
+                                y -= (opponent.morale/this.morale)*(Math.sin((distance * 2 * Math.PI)/diagonal)) * yMultiplier;
+                            }
+
                         }
-
-                        
 
                     }
                 }
@@ -152,13 +169,51 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
     }
 
     this.move = function(score) {
-  
-        var ratio = score['x'] / score['y']
-        var dy = Math.sqrt((this.sMax ** 2)/((ratio **2) + 1));
-        var dx = ratio * dy;               
 
-        this.x += dx;
-        this.y += dy;
+        var dx = 0;
+        var dy = 0;
+
+        if (score.x != 0 && score.y != 0) {
+
+            // var xMultiplier = 1;
+            // var yMultiplier = 1;
+
+            // if (score.x < 0) {
+            //     xMultiplier = -1
+            // }
+                        
+            // if (score.y < 0) {
+            //     yMultiplier = -1
+            // }
+
+
+            var ratio = score['x'] / score['y'];
+            dy = Math.sqrt((this.sMax ** 2)/((ratio **2) + 1));
+            dx = ratio * dy;
+
+            if (score.y < 0) {
+                dy *= -1;
+                dx *= -1;
+            }
+
+            // dx *= xMultiplier;
+            // dy *= yMultiplier;
+
+
+
+        
+        } else if (score.x != 0 && score.y == 0) {
+
+            dx = this.sMax;
+
+        } else if (score.x == 0 && score.y != 0) {
+
+            dy = this.sMax;
+        }
+
+
+        this.x += dx
+        this.y += dy
 
         this.draw();
         
