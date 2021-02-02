@@ -120,6 +120,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         var y = 0;
 
         var offset = 0;
+        var accentuate = 2;
 
         for (const team in units) {
             if (Object.hasOwnProperty.call(units, team)) {
@@ -145,15 +146,17 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                                 yMultiplier = -1
                             }
 
+                            var distFunc = Math.sin(1/(accentuate*((distance * 2 * Math.PI)/diagonal)) + 0.317 + offset);
+
                             if (opponent.morale < (this.morale * 3)) {
 
-                                x +=(this.morale/opponent.morale)*(Math.sin(1/((distance * 2 * Math.PI)/diagonal))) * xMultiplier;
-                                y += (this.morale/opponent.morale)*(Math.sin((distance * 2 * Math.PI)/diagonal)) * yMultiplier;
+                                x +=(this.morale/opponent.morale)*distFunc * xMultiplier;
+                                y += (this.morale/opponent.morale)*distFunc * yMultiplier;
 
                             } else {
 
-                                x -= (opponent.morale/this.morale)*(Math.sin((distance * 2 * Math.PI)/diagonal)) * xMultiplier;
-                                y -= (opponent.morale/this.morale)*(Math.sin((distance * 2 * Math.PI)/diagonal)) * yMultiplier;
+                                x -= (opponent.morale/this.morale)*distFunc * xMultiplier;
+                                y -= (opponent.morale/this.morale)*distFunc * yMultiplier;
                             }
 
                         }
