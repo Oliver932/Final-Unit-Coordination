@@ -24,8 +24,6 @@ addEventListener('resize', function() {
 
 addEventListener('click', function(event) {
 
-    console.log(event);
-
     var team = undefined;
 
     if (event.clientX < (innerWidth / 2)) {
@@ -41,6 +39,17 @@ addEventListener('click', function(event) {
     }
 
  
+})
+
+var pause = 1
+window.addEventListener('keydown', function (event) {
+
+    var key = event.which || event.keyCode;
+
+    if (key == 32) { 
+        pause *= -1
+      
+    }
 })
 
 const dimension = 10;
@@ -85,6 +94,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
     this.health = hMax;
 
     this.status = 'moving';
+    this.deviation = 0;
 
     this.draw = function () {
 
@@ -118,42 +128,31 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         return Math.sqrt(((x - this.x)**2) + ((y - this.y)**2))
     }
 
-    this.vectorTOangle = function (dx,dy) {
+    this.restrictDistance = function(tAngle, x, y, size){
 
-        var angle = undefined;
+        var travel = 0;
 
-        if (dx != 0 || dy != 0) {
+        var dx = x - this.x;
+        var dy = y - this.y;
+        var distance = this.distance(x, y);
+        var gap = size + this.size + offset;
+        var oAngle = vectorToAngle(dx, dy);
 
-            if (dx == 0) {
+        var angle = checkAngle(Math.abs(tAngle - oAngle));
 
-                if (dy > 0) {
-                    angle = Math.PI;
-                } else {
-                    angle = 0;
-                }
-            } else if (dy == 0) {
+        var b = -2 * distance * Math.cos(angle);
+        var c = (distance ** 2) - (gap ** 2);
 
-                if (dx > 0) {
-                    angle = 0.5 * Math.PI;
-                } else {
-                    angle = 1.5 * Math.PI;
-                }
-            } else {
-                angle = Math.atan(dx / dy) * -1;
+        var discriminant = (b ** 2) - (4 * c);
 
-                if (Math.sign(dy) == 1) {
-                    angle += Math.PI;
-                } else if (Math.sign(dy) == -1) {
-                    angle += 2* Math.PI;
-                }
-                
-            }
-
+        if (discriminant >= 0) {
+            travel = ((b * -1) - Math.sqrt(discriminant)) / 2;
         }
 
-        console.log(angle)
-        return angle;
+        return travel;
+        
     }
+
 
     this.chooseTarget = function () {
 
@@ -161,7 +160,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         var y = 0;
 
         var clusterAttraction = 0;
-        var clusterRepulsion = 0.2;
+        var clusterRepulsion = 0;
 
         var accentuate = 12;
         // var limit = Math.sin(1/accentuate);
@@ -206,7 +205,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                                 x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio;
                                 y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio;
 
-                            } else if (team == this.team && (opponent.status == 'static' || this.status == 'static')) {
+                            } else if (team == this.team && (opponent.status == 'static' )) {
 
                                 x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio * clusterRepulsion;
                                 y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio * clusterRepulsion;
@@ -226,36 +225,64 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
             
             }
         }
+        x *= (Math.random() + 0.5)
+        y *= (Math.random() + 0.5)
     
-    
-    return {'x':x * Math.random(), 'y':y * Math.random()}
+        var angle = vectorToAngle(x, y);
+        return angle
         
     }
 
-    this.move = function(score) {
+    this.calculateObstruction = function(x, y ,size) {
 
-        console.log(score.x, score.y);
-        var dx = 0;
-        var dy = 0;
+        var blocks = [];
 
+        var distance = this.distance(x, y);
+        var gap = size + this.size + offset;
+        var angle = vectorToAngle(x - this.x, y - this.y);
 
-        if (score.x != 0 && score.y != 0) {
+        if (distance - gap == this.sMax) {
+            blocks.push({'lower':angle, 'upper':angle})
+        } else {
 
-            var ratio = Math.abs(score['x'] / score['y']);
-            dy = Math.sign(score.y) * Math.sqrt((this.sMax ** 2)/((ratio **2) + 1));
-            dx = Math.sign(score.x) * Math.abs(ratio * dy);
+            var value = ((distance ** 2) + (this.sMax ** 2) - (gap ** 2))/(2 * distance * this.sMax);
+            var overshoot = Math.acos(value);
+            console.log((distance ** 2) + (this.sMax ** 2))
+            console.log('0 <= X <= 1 ' + value);
+            var angle = vectorToAngle(x - this.x, y - this.y);
 
-        
-        } else if (score.x != 0 && score.y == 0) {
+            var upper = angle + overshoot;
+            var lower = angle - overshoot;
+            
+            if (lower < 0) {
+                blocks.push({'lower':checkAngle(lower), 'upper': Math.PI * 2});
+                blocks.push({'lower':0, 'upper':upper});
 
-            dx = this.sMax * Math.sign(score.x);
+            } else if (upper > Math.PI * 2) {
+                blocks.push({'lower':lower, 'upper': Math.PI * 2});
+                blocks.push({'lower':0, 'upper':checkAngle(upper)});
 
-        } else if (score.x == 0 && score.y != 0) {
-
-            dy = this.sMax * Math.sign(score.y);
-
+            } else {
+                blocks.push({'lower':lower, 'upper':upper});
+            }
         }
 
+
+        // if (a > b){
+        //     lower = b;
+        //     upper = a;
+        // } else {
+        //     lower = a;
+        //     upper = b;
+        // }
+
+        return blocks;
+    }
+
+
+    this.assessSurroundings = function () {
+
+        var obstructions = [];
 
         for (const team in units) {
             if (Object.hasOwnProperty.call(units, team)) {
@@ -264,104 +291,216 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                         
                     var opponent = units[team][i];
                         
-                    if (this.distance(opponent.x, opponent.y) - sMax <= offset + this.size + opponent.size) {
+                    if (this != opponent) {
 
-                        var xDirection = Math.sign(opponent.x - this.x);
+                        if (this.distance(opponent.x, opponent.y) - this.size - opponent.size - offset <= this.sMax) {
                             
-                        var xDist = Math.abs(opponent.x - this.x) - this.size - opponent.size - offset;
+                        var blocks = this.calculateObstruction(opponent.x, opponent.y, opponent.size);
 
-                        if (xDist < 0 ){
-                            if (team != this.team) {
-                                xDist = 0;
+                            if (blocks.length > 0) {
+                                for (let index = 0; index < blocks.length; index++) {
+                                    obstructions.push(blocks[index]);
+                                    
+                                }
                             }
-                        }
 
-                        if (Math.sign(dx) == xDirection && Math.abs(dx) > xDist) {
-                            dx = xDist * Math.sign(dx)
                         }
-
-                        var yDirection = Math.sign(opponent.y - this.y);
-                            
-                        var yDist = Math.abs(opponent.y - this.y) - this.size - opponent.size - offset;
-
-                        if (yDist < 0){
-                            yDist = 0;
-                        }
-                            
-                        if (Math.sign(dy) == yDirection && Math.abs(dy) > yDist) {
-                                dy = yDist  * Math.sign(dy);
-                        }
-                        
-
                     }
                 }
             }
         }
+
+        return obstructions;
+    }
+
+    this.moderateAngle = function(angle, obstructions) {
+
+
+        var impossible = false;
+        if (obstructions.length > 0) {
         
+            for (let index = 0; index < obstructions.length; index++) {
+                const obstruction = obstructions[index];
+                console.log(obstruction, angle)
 
-        // for (const team in units) {
-        //     if (Object.hasOwnProperty.call(units, team)) {
-                    
-        //         for (let i = 0; i < units[team].length; i++) {
-                        
-        //             var opponent = units[team][i];
-                        
-        //             if (this != opponent) {
+                if (angle >= obstruction.lower && angle <= obstruction.upper){
 
-        //                 var distance = Math.sqrt(((opponent.x-(this.x + dx)) ** 2) + ((opponent.y - (this.y + dy)) ** 2))
-        //                 if (distance < this.size + opponent.size + offset) {
+                    impossible = true;
+                    console.log(impossible);
+                    break;
+                }
 
-        //                     if (dx != 0 && dy != 0) {
+            }
+        } 
+        return impossible
+    }
 
-        //                         var vDist = this.distance(opponent.x, opponent.y)
-        //                         var sDist = this.size + opponent.size + offset
-        //                         var angle = Math.acos(((this.sMax ** 2) + (vDist ** 2) - (sDist **2 ))/ (2 * vDist * this.sMax));
-        //                         angle += 1;
+    this.move = function(angle) {
 
-        //                     }
+        var repeats = 100;
 
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        if (angle != undefined) {
 
-        if (dy == 0 && dx == 0){
-            this.status = 'static';
+            console.log('initial angle ' + angle);
+
+            var obstructions = this.assessSurroundings();
+
+            var increment = (Math.PI * 2) / repeats;
+            var impossible = this.moderateAngle(angle, obstructions)
+            console.log(obstructions);
+
+            var repeat = 0;
+            var reverse = 1;
+            while (impossible == true) {
+
+                repeat += 1
+                angle = checkAngle(angle + (increment * repeat * reverse));
+                console.log('new angle ' + angle);
+                impossible = this.moderateAngle(angle, obstructions);
+
+                reverse *= - 1;
+                
+                if (repeat == repeats) {
+                    break;
+                }
+            }
+
+            if (impossible == false) {
+                this.status = 'moving';
+
+
+                var vector = angleToVector(angle, this.sMax);
+
+                var dx = vector.dx;
+                var dy = vector.dy;
+
+                if (dy == 0 && dx == 0){
+                    this.status = 'static';
+                } else {
+                    this.status = 'moving';
+                }
+
+                this.x += dx
+                this.y += dy
+            
+            }
+
+            
         } else {
-            this.status = 'moving';
+            this.status = 'static';
         }
 
-        console.log(this.vectorTOangle(dx, dy));
-
-        this.x += dx
-        this.y += dy
-
         this.draw();
-        
-    }
+    } 
 }
 
+function vectorToAngle(dx,dy) {
+
+    var angle = undefined;
+
+    if (dx != 0 || dy != 0) {
+
+        if (dx == 0) {
+
+            if (dy > 0) {
+                angle = Math.PI;
+            } else {
+                angle = 0;
+            }
+        } else if (dy == 0) {
+
+            if (dx > 0) {
+                angle = 0.5 * Math.PI;
+            } else {
+                angle = 1.5 * Math.PI;
+            }
+        } else {
+            angle = Math.atan(dx / dy) * -1;
+
+            if (Math.sign(dy) == 1) {
+                angle += Math.PI;
+            } else if (Math.sign(dy) == -1) {
+                angle += 2* Math.PI;
+            }
+            
+        }
+
+    }
+
+    angle = checkAngle(angle);
+    console.log(angle)
+
+    return angle
+}
+
+function angleToVector(angle, distance) {
+
+    var dx = 0;
+    var dy = 0;
+
+    if (angle != undefined) {
+        if (angle == 0) {
+            dy = -1 * distance;
+            dx = 0;
+        } else if (angle == Math.PI){
+            dy = distance
+            dx = 0;
+
+        } else if (angle == Math.PI * 0.5){
+            dx = distance;
+            dy = 0;
+
+        } else if (angle == Math.PI * 1.5){
+            dx = distance * -1;
+            dy = 0;
+
+        } else {
+            dx = distance * Math.sin(angle);
+            dy = -1 * distance * Math.cos(angle);
+        }
+    }
+
+    console.log(dx, dy);
+
+    return {'dx': dx, 'dy': dy}
+}
+
+function checkAngle(angle) {
+
+    if (angle > 2 * Math.PI) {
+
+        angle -= (Math.PI * 2 * Math.floor(angle/(Math.PI * 2)))
+    }
+
+    if (angle < 0) {
+        angle += (Math.PI * 2 * (Math.floor(Math.abs(angle/(Math.PI * 2)) + 1)))
+    }
+
+    return angle;
+    
+}
 
 
 
 var animate = function() {
     requestAnimationFrame(animate);
 
-    c.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    c.fillRect(0, 0, innerWidth, innerHeight)
+    if (pause == 1) {
 
-    for (const team in units) {
-        if (Object.hasOwnProperty.call(units, team)) {
+        c.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        c.fillRect(0, 0, innerWidth, innerHeight)
 
-            for (let i = 0; i < units[team].length; i++) {
-                units[team][i].update();
-        
-            }
+        for (const team in units) {
+            if (Object.hasOwnProperty.call(units, team)) {
+
+                for (let i = 0; i < units[team].length; i++) {
+                    units[team][i].update();
             
+                }
+                
+            } 
         }
     }
-
 }
 
 animate();
