@@ -33,7 +33,7 @@ addEventListener('click', function(event) {
     }
 
     if (event.shiftKey == true) {
-        units[team].push(new Unit(event.clientX, event.clientY, team, 'Commander', 6, 0.5, 300, 300));
+        units[team].push(new Unit(event.clientX, event.clientY, team, 'Commander', 9, 0.5, 300, 300));
     }else {
         units[team].push(new Unit(event.clientX, event.clientY, team, 'Soldier', 6, 3, 100, 100));
     }
@@ -128,25 +128,58 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         return Math.sqrt(((x - this.x)**2) + ((y - this.y)**2))
     }
 
-    this.restrictDistance = function(tAngle, x, y, size){
+    this.restrictDistance = function(tAngle, opponents){
 
-        var travel = 0;
+        var travel = undefined;
 
-        var dx = x - this.x;
-        var dy = y - this.y;
-        var distance = this.distance(x, y);
-        var gap = size + this.size + offset;
-        var oAngle = vectorToAngle(dx, dy);
+        for (let index = 0; index < opponents.length; index++) {
 
-        var angle = checkAngle(Math.abs(tAngle - oAngle));
+            // console.log('travel: ' + travel);
+            const opponent = opponents[index];
 
-        var b = -2 * distance * Math.cos(angle);
-        var c = (distance ** 2) - (gap ** 2);
+            var x = opponent.x;
+            var y = opponent.y;
+            var size = opponent.size;
 
-        var discriminant = (b ** 2) - (4 * c);
+            var dx = x - this.x;
+            var dy = y - this.y;
+            var distance = this.distance(x, y);
+            // console.log('distance: ' + distance);
+            var gap = size + this.size + offset;
+            // console.log('gap: ' + gap);
+            var oAngle = vectorToAngle(dx, dy);
+            // console.log('oAngle: ' + oAngle);
 
-        if (discriminant >= 0) {
-            travel = ((b * -1) - Math.sqrt(discriminant)) / 2;
+            var angle = checkAngle(Math.abs(tAngle - oAngle));
+            // console.log('angle: ' + angle);
+            if (angle > Math.PI) {
+                angle = (Math.PI * 2) - angle;
+            }
+            // console.log('adjusted angle: ' + angle);
+            if (angle != Math.PI && angle != 0) {
+
+                var b = -2 * distance * Math.cos(angle);
+                var c = (distance ** 2) - (gap ** 2);
+
+                var discriminant = (b ** 2) - (4 * c);
+                // console.log('discriminant: ' + discriminant);
+
+                if (discriminant >= 0) {
+                    var nTravel = ((b * -1) - Math.sqrt(discriminant)) / 2;
+                    // console.log('nTravel: ' + nTravel);
+                }
+
+                if (travel == undefined) {
+                    travel = nTravel;
+                } else if (nTravel < travel){
+                    travel = nTravel;
+                }
+
+            }
+        }
+
+        if (travel == undefined) {
+            travel = 0;
         }
 
         return travel;
@@ -163,7 +196,6 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         var clusterRepulsion = 0;
 
         var accentuate = 12;
-        // var limit = Math.sin(1/accentuate);
 
         for (const team in units) {
             if (Object.hasOwnProperty.call(units, team)) {
@@ -233,48 +265,38 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         
     }
 
-    this.calculateObstruction = function(x, y ,size) {
+    this.calculateObstruction = function(opponent) {
 
         var blocks = [];
 
-        var distance = this.distance(x, y);
-        var gap = size + this.size + offset;
-        var angle = vectorToAngle(x - this.x, y - this.y);
+        var distance = this.distance(opponent.x, opponent.y);
+        var gap = opponent.size + this.size + offset;
+        var angle = vectorToAngle(opponent.x - this.x, opponent.y - this.y);
 
         if (distance - gap == this.sMax) {
-            blocks.push({'lower':angle, 'upper':angle})
+            blocks.push({'opponent':opponent, 'lower':angle, 'upper':angle})
         } else {
 
             var value = ((distance ** 2) + (this.sMax ** 2) - (gap ** 2))/(2 * distance * this.sMax);
             var overshoot = Math.acos(value);
-            console.log((distance ** 2) + (this.sMax ** 2))
-            console.log('0 <= X <= 1 ' + value);
-            var angle = vectorToAngle(x - this.x, y - this.y);
+
+            var angle = vectorToAngle(opponent.x - this.x, opponent.y - this.y);
 
             var upper = angle + overshoot;
             var lower = angle - overshoot;
             
             if (lower < 0) {
-                blocks.push({'lower':checkAngle(lower), 'upper': Math.PI * 2});
-                blocks.push({'lower':0, 'upper':upper});
+                blocks.push({'opponent': opponent, 'lower':checkAngle(lower), 'upper': Math.PI * 2});
+                blocks.push({'opponent': opponent, 'lower':0, 'upper':upper});
 
             } else if (upper > Math.PI * 2) {
-                blocks.push({'lower':lower, 'upper': Math.PI * 2});
-                blocks.push({'lower':0, 'upper':checkAngle(upper)});
+                blocks.push({'opponent': opponent, 'lower':lower, 'upper': Math.PI * 2});
+                blocks.push({'opponent': opponent, 'lower':0, 'upper':checkAngle(upper)});
 
             } else {
-                blocks.push({'lower':lower, 'upper':upper});
+                blocks.push({'opponent': opponent, 'lower':lower, 'upper':upper});
             }
         }
-
-
-        // if (a > b){
-        //     lower = b;
-        //     upper = a;
-        // } else {
-        //     lower = a;
-        //     upper = b;
-        // }
 
         return blocks;
     }
@@ -295,7 +317,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                         if (this.distance(opponent.x, opponent.y) - this.size - opponent.size - offset <= this.sMax) {
                             
-                        var blocks = this.calculateObstruction(opponent.x, opponent.y, opponent.size);
+                        var blocks = this.calculateObstruction(opponent);
 
                             if (blocks.length > 0) {
                                 for (let index = 0; index < blocks.length; index++) {
@@ -315,24 +337,24 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
     this.moderateAngle = function(angle, obstructions) {
 
-
+        
+        var opponents = [];
         var impossible = false;
         if (obstructions.length > 0) {
         
             for (let index = 0; index < obstructions.length; index++) {
                 const obstruction = obstructions[index];
-                console.log(obstruction, angle)
 
                 if (angle >= obstruction.lower && angle <= obstruction.upper){
 
                     impossible = true;
-                    console.log(impossible);
-                    break;
+                    opponents.push(obstruction.opponent);
+
                 }
 
             }
         } 
-        return impossible
+        return {'impossible':impossible, 'opponents':opponents}
     }
 
     this.move = function(angle) {
@@ -341,22 +363,26 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
         if (angle != undefined) {
 
-            console.log('initial angle ' + angle);
-
             var obstructions = this.assessSurroundings();
 
             var increment = (Math.PI * 2) / repeats;
-            var impossible = this.moderateAngle(angle, obstructions)
-            console.log(obstructions);
+            var stats = this.moderateAngle(angle, obstructions)
 
             var repeat = 0;
             var reverse = 1;
-            while (impossible == true) {
+            
+            // if (this.y < innerHeight / 2) {
+            //     var reverse = 1;
+            // } else {
+            //     var reverse = -1;
+            // }
+
+            while (stats.impossible == true) {
 
                 repeat += 1
                 angle = checkAngle(angle + (increment * repeat * reverse));
-                console.log('new angle ' + angle);
-                impossible = this.moderateAngle(angle, obstructions);
+                stats = this.moderateAngle(angle, obstructions);
+
 
                 reverse *= - 1;
                 
@@ -365,25 +391,26 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                 }
             }
 
-            if (impossible == false) {
-                this.status = 'moving';
-
-
+            if (stats.impossible == false) {
                 var vector = angleToVector(angle, this.sMax);
-
-                var dx = vector.dx;
-                var dy = vector.dy;
-
-                if (dy == 0 && dx == 0){
-                    this.status = 'static';
-                } else {
-                    this.status = 'moving';
-                }
-
-                this.x += dx
-                this.y += dy
-            
+            } else {
+                // console.log(stats)
+                var vector = angleToVector(angle, this.restrictDistance(angle, stats.opponents));
             }
+
+
+            var dx = vector.dx;
+            var dy = vector.dy;
+
+            if (dy == 0 && dx == 0){
+                this.status = 'static';
+            } else {
+                this.status = 'moving';
+            }
+
+            this.x += dx
+            this.y += dy
+            
 
             
         } else {
@@ -428,7 +455,6 @@ function vectorToAngle(dx,dy) {
     }
 
     angle = checkAngle(angle);
-    console.log(angle)
 
     return angle
 }
@@ -438,7 +464,7 @@ function angleToVector(angle, distance) {
     var dx = 0;
     var dy = 0;
 
-    if (angle != undefined) {
+    if (angle != undefined && distance != 0) {
         if (angle == 0) {
             dy = -1 * distance;
             dx = 0;
@@ -460,7 +486,6 @@ function angleToVector(angle, distance) {
         }
     }
 
-    console.log(dx, dy);
 
     return {'dx': dx, 'dy': dy}
 }
@@ -487,7 +512,7 @@ var animate = function() {
 
     if (pause == 1) {
 
-        c.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        c.fillStyle = 'rgba(255, 255, 255, 1)';
         c.fillRect(0, 0, innerWidth, innerHeight)
 
         for (const team in units) {
