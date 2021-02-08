@@ -53,7 +53,7 @@ window.addEventListener('keydown', function (event) {
 })
 
 const dimension = 10;
-const offset = 10;
+const offset = 5;
 
 var img = new Image();
 img.src = 'Modern Armor.png';
@@ -64,11 +64,13 @@ img.src = 'Modern Armor.png';
 
 teamColours = {
     'Oli': {
-        'moving' :'cyan',
-        'static' :'blue'},
+        'moving' :'#00fff3',
+        'static' :'#007dff',
+        'engaged':'#0200b9'},
     'Hazza': {
-        'moving':'orange',
-        'static':'red'}
+        'moving':'#ec9b00',
+        'static':'#ec5300',
+        'engaged':'#8b0000'}
 };
 
 var units = {
@@ -94,7 +96,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
     this.health = hMax;
 
     this.status = 'moving';
-    this.deviation = 0;
+    this.enemies = [];
 
     this.draw = function () {
 
@@ -116,7 +118,9 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
         this.draw();
 
-        if (this.sMax > 0) {
+        // this.fightCheck();
+
+        if (this.sMax > 0 && this.status != 'engaged') {
 
             this.move(this.chooseTarget());
         }
@@ -131,6 +135,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
     this.restrictDistance = function(tAngle, opponents){
 
         var travel = undefined;
+        var combatant = undefined;
 
         for (let index = 0; index < opponents.length; index++) {
 
@@ -171,20 +176,74 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                 if (travel == undefined) {
                     travel = nTravel;
+                    combatant = opponent;
                 } else if (nTravel < travel){
                     travel = nTravel;
+                    combatant = opponent;
                 }
 
             }
         }
 
+
         if (travel == undefined) {
             travel = 0;
+        }
+
+        if (combatant != undefined) {
+            if (combatant.team != this.team && this.morale > combatant.morale /3){
+                this.status = 'engaged';
+
+                if (this.enemies.includes(combatant) == false){
+                    this.enemies.push(combatant);
+                }
+
+                combatant.status = 'engaged';
+
+                if (combatant.enemies.includes(this) == false){
+                    combatant.enemies.push(this);
+                }
+            }
         }
 
         return travel;
         
     }
+
+    this.fightCheck = function() {
+
+        var fight = true
+        if (this.status == 'engaged') {
+
+            for (let index = 0; index < this.enemies.length; index++) {
+                const enemy = this.enemies[index];
+
+                if (this.morale < enemy.morale / 3) {
+                    fight = false;
+                    //break;
+                }
+                
+            }
+
+            if (fight == false){
+
+                for (let index = 0; index < this.enemies.length; index++) {
+                    const enemy = this.enemies[index];
+
+                    enemy.enemies = array.filter(function(value, index, arr){ 
+                        return value != this;
+                    });
+
+                    if (enemy.enemies.length == 0) {
+                        enemy.status = 'moving';
+                    }
+                }
+
+                this.enemies = [];
+                this.status = 'moving';
+            }
+        }
+    };
 
 
     this.chooseTarget = function () {
@@ -221,21 +280,34 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                                 yMultiplier = -1
                         }
 
-                        var distFunc = Math.sin(1/(accentuate * ((distance - this.size - opponent.size + offset)/diagonal)));
+                        var distFunc = Math.sin(1/(accentuate * ((distance - this.size - opponent.size - offset)/diagonal)));
+                        if (distFunc < 0) {
+                            distFunc *= -1;
+                        }
+                        // var responsiveness = 10;
+                        // var distFunc = 1/(Math.sqrt(Math.sqrt(distance)) + responsiveness);
+
 
                         if (distFunc > 0) {
                             var xRatio = Math.abs((opponent.x - this.x)/((opponent.y - this.y) + (opponent.x - this.x)));
                             var yRatio = 1 - xRatio;
 
+                            var engaged = 1
+                            var amplifier = 10;
+                            if (opponent.status == 'engaged') {
+
+                                engaged = opponent.enemies.length * amplifier;
+                            }
+
                             if (opponent.morale < (this.morale * 3) && team != this.team) {
 
-                                x +=(this.morale/opponent.morale)*distFunc * xMultiplier * xRatio;
-                                y += (this.morale/opponent.morale)*distFunc * yMultiplier * yRatio;
+                                x +=(this.morale/opponent.morale)*distFunc * xMultiplier * xRatio / engaged;
+                                y += (this.morale/opponent.morale)*distFunc * yMultiplier * yRatio / engaged;
 
                             } else if (team != this.team){
 
-                                x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio;
-                                y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio;
+                                x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio / engaged;
+                                y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio / engaged;
 
                             } else if (team == this.team && (opponent.status == 'static' )) {
 
@@ -317,14 +389,14 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                         if (this.distance(opponent.x, opponent.y) - this.size - opponent.size - offset <= this.sMax) {
                             
-                        var blocks = this.calculateObstruction(opponent);
+                            var blocks = this.calculateObstruction(opponent);
 
-                            if (blocks.length > 0) {
-                                for (let index = 0; index < blocks.length; index++) {
-                                    obstructions.push(blocks[index]);
-                                    
-                                }
+
+                            for (let index = 0; index < blocks.length; index++) {
+                                obstructions.push(blocks[index]);
+                                
                             }
+
 
                         }
                     }
@@ -337,9 +409,9 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
     this.moderateAngle = function(angle, obstructions) {
 
-        
         var opponents = [];
         var impossible = false;
+        var enemy = false;
         if (obstructions.length > 0) {
         
             for (let index = 0; index < obstructions.length; index++) {
@@ -350,11 +422,18 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                     impossible = true;
                     opponents.push(obstruction.opponent);
 
+                    if (this.team != obstruction.opponent.team && this.morale > obstruction.opponent.morale / 3) {
+                        enemy = true;
+                    }
+
                 }
 
             }
+
         } 
-        return {'impossible':impossible, 'opponents':opponents}
+
+
+        return {'impossible':impossible, 'opponents':opponents, 'enemy':enemy}
     }
 
     this.move = function(angle) {
@@ -383,6 +462,11 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                 angle = checkAngle(angle + (increment * repeat * reverse));
                 stats = this.moderateAngle(angle, obstructions);
 
+                if (stats.enemy) {
+                    break;
+
+                }
+
 
                 reverse *= - 1;
                 
@@ -402,9 +486,9 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
             var dx = vector.dx;
             var dy = vector.dy;
 
-            if (dy == 0 && dx == 0){
+            if (dy == 0 && dx == 0 && this.status != 'engaged'){
                 this.status = 'static';
-            } else {
+            } else if (this.status != 'engaged'){
                 this.status = 'moving';
             }
 
