@@ -33,13 +33,29 @@ addEventListener('click', function(event) {
     }
 
     if (event.shiftKey == true) {
-        units[team].push(new Unit(event.clientX, event.clientY, team, 'Commander', 9, 0.5, 300, 300));
+        createFormation(team, event.clientX, event.clientY, 2, 3, 'Commander');
     }else {
-        units[team].push(new Unit(event.clientX, event.clientY, team, 'Soldier', 6, 3, 100, 100));
+        createFormation(team, event.clientX, event.clientY, 3, 5, 'Soldier');
     }
 
  
 })
+
+var unitTypes = {
+    'Commander':{
+        'size':4,
+        'sMax':1,
+        'mMax':300,
+        'hMax':300
+    },
+
+    'Soldier':{
+        'size':3,
+        'sMax':3,
+        'mMax':100,
+        'hMax':100
+    }
+}
 
 var pause = 1
 window.addEventListener('keydown', function (event) {
@@ -53,7 +69,7 @@ window.addEventListener('keydown', function (event) {
 })
 
 const dimension = 10;
-const offset = 5;
+const offset = 2;
 
 var img = new Image();
 img.src = 'Modern Armor.png';
@@ -62,7 +78,7 @@ img.src = 'Modern Armor.png';
 //     c.drawImage(img, 20, 20, width, height);
 // }
 
-teamColours = {
+var teamColours = {
     'Oli': {
         'moving' :'#00fff3',
         'static' :'#007dff',
@@ -78,23 +94,23 @@ var units = {
     'Hazza':[]
 };
 
-var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
+var Unit = function (x, y, team, type) {
 
     this.x = x;
     this.y = y;
 
-    this.size = size;
+    this.size = unitTypes[type].size;
 
-    this.sMax = sMax;
-    this.mMax = mMax
-    this.hMax = hMax;
+    this.sMax = unitTypes[type].sMax;
+    this.mMax = unitTypes[type].mMax
+    this.hMax = unitTypes[type].hMax;
 
     this.team = team;
-    this.rank = rank;
+    this.type = type;
 
-    this.baseMorale = mMax;
-    this.morale = mMax;
-    this.health = hMax;
+    this.baseMorale = this.mMax;
+    this.morale = this.mMax;
+    this.health = this.hMax;
 
     this.status = 'moving';
     this.enemies = [];
@@ -108,7 +124,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
         c.strokeStyle = 'black';
 
-        if (this.rank == 'Commander') {
+        if (this.type == 'Commander') {
             c.stroke();
         }
         
@@ -125,7 +141,9 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         if (this.sMax > 0 && this.status != 'engaged') {
 
             this.move(this.chooseTarget());
+            // this.move(5/4*Math.PI);
         }
+
 
     }
 
@@ -285,8 +303,6 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
         var x = 0;
         var y = 0;
 
-        var clusterAttraction = 0;
-        var clusterRepulsion = 0;
 
         var accentuate = 12;
 
@@ -296,6 +312,8 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                     
                 for (let i = 0; i < units[team].length; i++) {
+
+                    // console.log('a', x, y);
 
                     var opponent = units[team][i];
 
@@ -307,11 +325,11 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                         var yMultiplier = 1;
 
                         if (opponent.x < this.x) {
-                                xMultiplier = -1
+                            xMultiplier = -1
                         }
                             
                         if (opponent.y < this.y) {
-                                yMultiplier = -1
+                            yMultiplier = -1
                         }
 
                         var distFunc = Math.sin(1/(accentuate * ((distance - this.size - opponent.size - offset)/diagonal)));
@@ -323,7 +341,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
 
                         if (distFunc > 0) {
-                            var xRatio = Math.abs((opponent.x - this.x)/((opponent.y - this.y) + (opponent.x - this.x)));
+                            var xRatio = Math.abs((opponent.x - this.x)/(Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
                             var yRatio = 1 - xRatio;
 
                             var engaged = 1
@@ -337,21 +355,14 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                                 x +=(this.morale/opponent.morale)*distFunc * xMultiplier * xRatio / engaged;
                                 y += (this.morale/opponent.morale)*distFunc * yMultiplier * yRatio / engaged;
+                                // console.log(1 ,x, y, xRatio, yRatio, distFunc, distance);
 
                             } else if (team != this.team){
 
                                 x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio / engaged;
                                 y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio / engaged;
+                                // console.log(2, x, y);
 
-                            } else if (team == this.team && (opponent.status == 'static' )) {
-
-                                x -= (opponent.morale/this.morale)*distFunc * xMultiplier * xRatio * clusterRepulsion;
-                                y -= (opponent.morale/this.morale)*distFunc * yMultiplier * yRatio * clusterRepulsion;
-
-                            } else if (opponent.status == 'moving' && team== this.team && this.status == 'moving') {
-
-                                x +=(this.morale/opponent.morale)*distFunc * xMultiplier * xRatio * clusterAttraction;
-                                y += (this.morale/opponent.morale)*distFunc * yMultiplier * yRatio * clusterAttraction;
 
                             }
 
@@ -540,6 +551,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 }
 
 function vectorToAngle(dx,dy) {
+    // console.log(dx, dy);
 
     var angle = undefined;
 
@@ -573,7 +585,7 @@ function vectorToAngle(dx,dy) {
     }
 
     angle = checkAngle(angle);
-
+    // console.log(angle);
     return angle
 }
 
@@ -610,7 +622,7 @@ function angleToVector(angle, distance) {
 
 function checkAngle(angle) {
 
-    if (angle > 2 * Math.PI) {
+    if (angle >= 2 * Math.PI) {
 
         angle -= (Math.PI * 2 * Math.floor(angle/(Math.PI * 2)))
     }
@@ -621,6 +633,23 @@ function checkAngle(angle) {
 
     return angle;
     
+}
+
+function createFormation(team, X, Y, rows, columns, type) {
+    // pause = -1;
+
+    var increment = (unitTypes[type].size * 2) + offset;
+    for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < columns; c++) {
+
+            units[team].push(new Unit(X + (c * increment), Y + (r * increment), team, type));
+            // console.log(team);
+
+
+        }
+
+    }
+    // pause = 1;
 }
 
 
