@@ -92,6 +92,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
     this.team = team;
     this.rank = rank;
 
+    this.baseMorale = mMax;
     this.morale = mMax;
     this.health = hMax;
 
@@ -118,7 +119,8 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
         this.draw();
 
-        // this.fightCheck();
+        this.moralise();
+        this.fightCheck();
 
         if (this.sMax > 0 && this.status != 'engaged') {
 
@@ -130,6 +132,34 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
     this.distance = function (x,y) {
 
         return Math.sqrt(((x - this.x)**2) + ((y - this.y)**2))
+    }
+
+    this.moralise = function() {
+
+        this.morale = this.baseMorale;
+
+        for (const team in units) {
+            if (Object.hasOwnProperty.call(units, team)) {
+
+                for (let i = 0; i < units[team].length; i++) {
+
+                    var opponent = units[team][i];
+
+                    if (this != opponent && team == this.team) {
+                        this.calculateMorale(opponent);
+                    }
+                }
+            }
+        }
+    }
+
+    this.calculateMorale = function(friend) {
+
+        var distance = this.distance(friend.x, friend.y);
+
+        var distFunc = ((offset + this.size + friend.size)/(distance))
+
+        this.morale += distFunc * friend.baseMorale;
     }
 
     this.restrictDistance = function(tAngle, opponents){
@@ -230,9 +260,13 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
                 for (let index = 0; index < this.enemies.length; index++) {
                     const enemy = this.enemies[index];
 
-                    enemy.enemies = array.filter(function(value, index, arr){ 
-                        return value != this;
-                    });
+                    for( var i = 0; i < enemy.enemies.length; i++){ 
+                                   
+                        if ( enemy.enemies[i] === this) { 
+                            enemy.enemies.splice(i, 1); 
+                            i--; 
+                        }
+                    }
 
                     if (enemy.enemies.length == 0) {
                         enemy.status = 'moving';
@@ -267,7 +301,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
                     if (this != opponent) {
 
-                        var distance = this.distance(opponent.x, opponent.y)
+                        var distance = this.distance(opponent.x, opponent.y);
 
                         var xMultiplier = 1;
                         var yMultiplier = 1;
@@ -438,7 +472,7 @@ var Unit = function (x, y, team, rank, size, sMax, mMax, hMax) {
 
     this.move = function(angle) {
 
-        var repeats = 100;
+        var repeats = 200;
 
         if (angle != undefined) {
 
