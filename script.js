@@ -23,7 +23,7 @@ addEventListener('resize', function() {
 })
 
 
-var unitNames = ['Swordsman', 'Longswordsman', 'Cossack'];
+var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight'];
 addEventListener('keypress', function(event){
 
     try {
@@ -55,15 +55,15 @@ var unitTypes = {
         'mStatuses':{
             'charging':{
                 'speed':0.7,
-                'morale': 3
+                'morale': 3.5
             },
             'advancing':{
                 'speed':0.5,
-                'morale': 0.45
+                'morale': 0.35
             },
             'retreating':{
                 'speed':0.2,
-                'morale': 0.3
+                'morale': 0.1
             },
             'routed':{
                 'speed':0.55,
@@ -81,13 +81,13 @@ var unitTypes = {
 
         'behaviour':{
             'power':-1,
-            'sensitivity':2,
+            'sensitivity':1,
             'straggler':4
         }
     },
 
     'Swordsman':{
-        'size':5,
+        'size':6,
         'mStatuses':{
             'charging':{
                 'speed':0.8,
@@ -95,7 +95,7 @@ var unitTypes = {
             },
             'advancing':{
                 'speed':0.6,
-                'morale': 0.6
+                'morale': 0.5
             },
             'retreating':{
                 'speed':0.45,
@@ -116,13 +116,13 @@ var unitTypes = {
 
         'behaviour':{
             'power':-1,
-            'sensitivity':2,
+            'sensitivity':1,
             'straggler':2
         }
     },
 
     'Cossack':{
-        'size':5,
+        'size':6,
         'mStatuses':{
             'charging':{
                 'speed':1.5,
@@ -133,7 +133,7 @@ var unitTypes = {
                 'morale': 0.4
             },
             'retreating':{
-                'speed':0.5,
+                'speed':0.6,
                 'morale': 0.35
             },
             'routed':{
@@ -150,14 +150,49 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'power':1,
-            'sensitivity':3,
-            'straggler':8
+            'power':-1,
+            'sensitivity':1,
+            'straggler':3
+        }
+    },
+
+    'Knight':{
+        'size':7,
+        'mStatuses':{
+            'charging':{
+                'speed':1.2,
+                'morale': 0.65
+            },
+            'advancing':{
+                'speed':0.65,
+                'morale': 0.6
+            },
+            'retreating':{
+                'speed':0.45,
+                'morale': 0.3
+            },
+            'routed':{
+                'speed':0.95,
+                'morale': 0
+            }
+        },
+        'mMax':300,
+        'hMax':200,
+
+        'formation':{
+            'rows':1,
+            'columns':4
+        },
+
+        'behaviour':{
+            'power':-1,
+            'sensitivity':1,
+            'straggler':0.6
         }
     }
 }
 
-var pause = 1
+var pause = -1
 window.addEventListener('keydown', function (event) {
 
     var key = event.which || event.keyCode;
@@ -291,7 +326,7 @@ var Unit = function (x, y, team, type) {
 
         var distance = this.distance(friend.x, friend.y);
 
-        var distFunc = ((offset + this.size + friend.size)/(distance)) ** 2;
+        var distFunc = (offset + this.size + friend.size)/(distance);
 
         this.morale += distFunc * friend.baseMorale;
     }
@@ -815,6 +850,7 @@ function createFormation(team, X, Y, type) {
         for (var c = 0; c < columns; c++) {
 
             units[team].push(new Unit(X + (c * increment), Y + (r * increment), team, type));
+            units[team][units[team].length - 1].draw();
             // console.log(team);
 
 
