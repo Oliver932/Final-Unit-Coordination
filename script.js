@@ -80,11 +80,12 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'power':-1,
-            'sensitivity':1,
-            'straggler':4,
+
+            'straggler':0.5,
             'burst':50,
-            'burstPower':5
+            'burstPower':5,
+            'group':1,
+            'flanking':false
 
         }
     },
@@ -118,9 +119,11 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'straggler':2,
+            'straggler':1,
             'burst':50,
-            'burstPower':5
+            'burstPower':5,
+            'group':1,
+            'flanking':false
         }
     },
 
@@ -153,9 +156,11 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'straggler':3,
+            'straggler':5,
             'burst':200,
-            'burstPower':10
+            'burstPower':10,
+            'group':1,
+            'flanking':true
         }
     },
 
@@ -188,12 +193,16 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'straggler':0.6,
+            'straggler':0.7,
             'burst':150,
-            'burstPower':40
+            'burstPower':40,
+            'group':1,
+            'flanking':false
         }
     }
 }
+
+
 
 var pause = -1
 window.addEventListener('keydown', function (event) {
@@ -206,8 +215,23 @@ window.addEventListener('keydown', function (event) {
     }
 })
 
-const dimension = 10;
+const scale = 1.6;
 const offset = 1;
+
+for (const key1 in unitTypes) {
+    if (Object.hasOwnProperty.call(unitTypes, key1)) {
+        const unitType = unitTypes[key1];
+
+        for (const key2 in unitType.mStatuses) {
+            if (Object.hasOwnProperty.call(unitType.mStatuses, key2)) {
+
+                unitType.mStatuses[key2].speed *= scale;
+                
+            }
+        }   
+        
+    }
+}
 
 var images = {};
 for (let index = 0; index < unitNames.length; index++) {
@@ -244,10 +268,11 @@ var Unit = function (x, y, team, type) {
     this.x = x;
     this.y = y;
 
-    this.size = unitTypes[type].size;
+    this.size = unitTypes[type].size * scale;
 
     this.mMax = unitTypes[type].mMax;
     this.mStatuses = unitTypes[type].mStatuses;
+
     this.hMax = unitTypes[type].hMax;
     this.behaviour = unitTypes[type].behaviour;
 
@@ -263,8 +288,12 @@ var Unit = function (x, y, team, type) {
 
 
     this.status = 'moving';
-    this.mStatus = 'advancing'
-    this.enemies = [];
+    this.mStatus = 'advancing';
+
+    this.neighbours = {
+        'friends':[],
+        'enemies':[]
+    }
 
 
 
@@ -402,15 +431,25 @@ var Unit = function (x, y, team, type) {
             if (combatant.team != this.team && this.morale > combatant.morale /3){
                 this.status = 'engaged';
 
-                if (this.enemies.includes(combatant) == false){
-                    this.enemies.push(combatant);
+                if (this.neighbours.enemies.includes(combatant) == false){
+                    this.neighbours.enemies.push(combatant);
                 }
 
                 combatant.status = 'engaged';
 
-                if (combatant.enemies.includes(this) == false){
-                    combatant.enemies.push(this);
+                if (combatant.neighbours.enemies.includes(this) == false){
+                    combatant.neighbours.enemies.push(this);
                 }
+            } else if (combatant.team == this.team && combatant != this){
+
+                if (this.neighbours.friends.includes(combatant) == false){
+                    this.neighbours.friends.push(combatant);
+                }
+
+                if (combatant.neighbours.friends.includes(this) == false){
+                    combatant.neighbours.friends.push(this);
+                }
+
             }
         }
 
@@ -423,8 +462,8 @@ var Unit = function (x, y, team, type) {
         var fight = true
         if (this.status == 'engaged') {
 
-            for (let index = 0; index < this.enemies.length; index++) {
-                const enemy = this.enemies[index];
+            for (let index = 0; index < this.neighbours.enemies.length; index++) {
+                const enemy = this.neighbours.enemies[index];
                 var mRatio = this.morale / enemy.morale
 
                 if (mRatio < this.mStatuses.retreating.morale) {
@@ -436,14 +475,15 @@ var Unit = function (x, y, team, type) {
 
             if (fight == false){
 
-                this.emptyEnemies();
+                this.emptyNeighbours('enemies');
                 this.status = 'moving';
             }
         }
     };
 
     this.delete = function() {
-        this.emptyEnemies();
+        this.emptyNeighbours('enemies');
+        this.emptyNeighbours('friends');
 
         for (let index = 0; index < units[this.team].length; index++) {
             const mate = units[this.team][index];
@@ -462,25 +502,25 @@ var Unit = function (x, y, team, type) {
         }
     }
 
-    this.emptyEnemies = function() {
+    this.emptyNeighbours = function(list) {
 
-        for (let index = 0; index < this.enemies.length; index++) {
-                    const enemy = this.enemies[index];
+        for (let index = 0; index < this.neighbours[list].length; index++) {
+                    const enemy = this.neighbours[list][index];
 
-                    for( var i = 0; i < enemy.enemies.length; i++){ 
+                    for( var i = 0; i < enemy.neighbours[list].length; i++){ 
                                    
-                        if ( enemy.enemies[i] === this) { 
-                            enemy.enemies.splice(i, 1); 
+                        if ( enemy.neighbours[list][i] === this) { 
+                            enemy.neighbours[list].splice(i, 1); 
                             i--; 
                         }
                     }
 
-                    if (enemy.enemies.length == 0) {
+                    if (enemy.neighbours[list].length == 0 && list == 'enemies') {
                         enemy.status = 'moving';
                     }
                 }
 
-                this.enemies = [];
+                this.neighbours[list] = [];
     }
 
 
@@ -533,30 +573,40 @@ var Unit = function (x, y, team, type) {
 
 
                         if (distFunc > 0) {
-                            var xRatio = Math.abs((opponent.x - this.x)/(Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
+
+                            if (this.behaviour.flanking == false) {
+                                var xRatio = Math.abs((opponent.x - this.x)/(Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
+                            } else {
+                                var xRatio = Math.abs((opponent.x - this.x)/(Math.abs((opponent.y - this.y) + (opponent.x - this.x))));
+                            }
+
                             var yRatio = 1 - xRatio;
 
                             var engaged = 1
+
                             if (opponent.status == 'engaged') {
 
-                                engaged = opponent.enemies.length * this.behaviour.straggler;
+                                engaged = opponent.neighbours.enemies.length * this.behaviour.group;
                             }
 
+                            var friends = this.behaviour.straggler ** opponent.neighbours.friends.length;
+
+                            console.log(friends);
                             var mRatio = this.morale / opponent.morale;
 
                             // var mMultiplier = (mRatio * this.behaviour.sensitivity) ** this.behaviour.power;
 
                             if (mRatio >= this.mStatuses.retreating.morale && team != this.team) {
 
-                                xA +=  distFunc * xMultiplier * xRatio / engaged;
-                                yA +=  distFunc * yMultiplier * yRatio / engaged;
+                                xA +=  distFunc * xMultiplier * xRatio / (engaged + friends);
+                                yA +=  distFunc * yMultiplier * yRatio / (engaged + friends);
                                 tA += distFunc;
                                 // console.log(1 ,x, y, xRatio, yRatio, distFunc, distance);
 
                             } else if (team != this.team){
 
-                                xR -= distFunc * xMultiplier * xRatio / (engaged );
-                                yR -= distFunc * yMultiplier * yRatio / (engaged );
+                                xR -= distFunc * xMultiplier * xRatio / (engaged + friends);
+                                yR -= distFunc * yMultiplier * yRatio / (engaged + friends);
                                 tR += distFunc;
                                 // console.log(2, x, y);
 
@@ -696,6 +746,7 @@ var Unit = function (x, y, team, type) {
 
     this.move = function(angle) {
 
+
         var repeats = 200;
 
         if (angle != undefined) {
@@ -732,6 +783,8 @@ var Unit = function (x, y, team, type) {
                     break;
                 }
             }
+            
+            this.emptyNeighbours('friends');
 
             if (stats.impossible == false) {
                 var vector = angleToVector(angle, this.mStatuses[this.mStatus].speed);
@@ -854,7 +907,7 @@ function createFormation(team, X, Y, type) {
     var columns = unitTypes[type].formation.columns;
     // pause = -1;
 
-    var increment = (unitTypes[type].size * 2) + offset;
+    var increment = (unitTypes[type].size * scale *2) + offset;
     for (var r = 0; r < rows; r++) {
         for (var c = 0; c < columns; c++) {
 
