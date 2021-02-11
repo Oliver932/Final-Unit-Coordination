@@ -82,7 +82,10 @@ var unitTypes = {
         'behaviour':{
             'power':-1,
             'sensitivity':1,
-            'straggler':4
+            'straggler':4,
+            'burst':50,
+            'burstPower':5
+
         }
     },
 
@@ -115,9 +118,9 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'power':-1,
-            'sensitivity':1,
-            'straggler':2
+            'straggler':2,
+            'burst':50,
+            'burstPower':5
         }
     },
 
@@ -150,9 +153,9 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'power':-1,
-            'sensitivity':1,
-            'straggler':3
+            'straggler':3,
+            'burst':200,
+            'burstPower':10
         }
     },
 
@@ -185,9 +188,9 @@ var unitTypes = {
         },
 
         'behaviour':{
-            'power':-1,
-            'sensitivity':1,
-            'straggler':0.6
+            'straggler':0.6,
+            'burst':150,
+            'burstPower':40
         }
     }
 }
@@ -250,6 +253,7 @@ var Unit = function (x, y, team, type) {
 
     this.image = images[type];
 
+
     this.team = team;
     this.type = type;
 
@@ -306,6 +310,11 @@ var Unit = function (x, y, team, type) {
     this.moralise = function() {
 
         this.morale = this.baseMorale;
+
+        if (this.behaviour.burst > 0) {
+            this.behaviour.burst -= 1;
+            this.morale *= this.behaviour.burstPower;
+        }
 
         for (const team in units) {
             if (Object.hasOwnProperty.call(units, team)) {
@@ -535,19 +544,19 @@ var Unit = function (x, y, team, type) {
 
                             var mRatio = this.morale / opponent.morale;
 
-                            var mMultiplier = (mRatio * this.behaviour.sensitivity) ** this.behaviour.power;
+                            // var mMultiplier = (mRatio * this.behaviour.sensitivity) ** this.behaviour.power;
 
                             if (mRatio >= this.mStatuses.retreating.morale && team != this.team) {
 
-                                xA += mMultiplier * distFunc * xMultiplier * xRatio / engaged;
-                                yA += mMultiplier * distFunc * yMultiplier * yRatio / engaged;
+                                xA +=  distFunc * xMultiplier * xRatio / engaged;
+                                yA +=  distFunc * yMultiplier * yRatio / engaged;
                                 tA += distFunc;
                                 // console.log(1 ,x, y, xRatio, yRatio, distFunc, distance);
 
                             } else if (team != this.team){
 
-                                xR -= distFunc * xMultiplier * xRatio / (engaged * mMultiplier);
-                                yR -= distFunc * yMultiplier * yRatio / (engaged * mMultiplier);
+                                xR -= distFunc * xMultiplier * xRatio / (engaged );
+                                yR -= distFunc * yMultiplier * yRatio / (engaged );
                                 tR += distFunc;
                                 // console.log(2, x, y);
 
