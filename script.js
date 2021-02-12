@@ -234,15 +234,22 @@ for (const key1 in unitTypes) {
     }
 }
 
+imageClasses = ['L', 'R'];
 var images = {};
+
 for (let index = 0; index < unitNames.length; index++) {
     const name = unitNames[index];
-    images[name] = new Image();
-    images[name].src = name + '.png';
-    
+    images[name] = {};
+
+    for (let i = 0; i < imageClasses.length; i++) {
+        const imageClass = imageClasses[i];
+
+        images[name][imageClass] = new Image();
+        images[name][imageClass].src = name + '-' + imageClass + '.png';
+        
+    }
 }
-var img = new Image();
-img.src = 'Modern Armor.png';
+
 
 // img.onload = function () {
 //     c.drawImage(img, 20, 20, width, height);
@@ -277,7 +284,7 @@ var Unit = function (x, y, team, type) {
     this.hMax = unitTypes[type].hMax;
     this.behaviour = unitTypes[type].behaviour;
 
-    this.image = images[type];
+    this.images = images[type];
 
 
     this.team = team;
@@ -296,6 +303,12 @@ var Unit = function (x, y, team, type) {
         'enemies':[]
     }
 
+    if (team == 'Oli') {
+        this.orientation = 'R';
+    } else {
+        this.orientation = 'L';
+    }
+
 
 
     this.draw = function () {
@@ -305,13 +318,12 @@ var Unit = function (x, y, team, type) {
         c.fillStyle = teamColours[this.team][this.status];
         c.fill();
 
-        c.strokeStyle = 'black';
-
-        if (this.type == 'Commander') {
-            c.stroke();
+        var multiplier = -1;
+        if (this.orientation == 'R') {
+            multiplier = -0.3;
         }
-        
-        c.drawImage(this.image, this.x - this.size * 3, this.y - this.size * 2, this.size * 4, this.size * 4);
+
+        c.drawImage(this.images[this.orientation], this.x + (this.size * 3 * multiplier), this.y - this.size * 2, this.size * 4, this.size * 4);
     }
 
     this.update = function () {
@@ -674,15 +686,10 @@ var Unit = function (x, y, team, type) {
 
             var infront = Math.sign(xDistance + (overshoot * xMultiplier)) * xMultiplier;
             var iAngle = vectorToAngle(dx, dy);
-            console.log(iAngle)
 
             if (infront == 1 && Math.abs(yDistance) < flanking) {
                 iAngle += flankAngle * Math.sign(yDistance) * xMultiplier * -1;
             }
-            // } else if ( infront == -1 && Math.abs(yDistance) > flanking){
-            //     iAngle -= flankAngle * Math.sign(yDistance) * xMultiplier * -1;
-            // }
-            console.log(iAngle)
 
             flankD = angleToVector(iAngle, this.mStatuses[this.mStatus].speed);
 
@@ -849,6 +856,14 @@ var Unit = function (x, y, team, type) {
                 this.status = 'static';
             } else if (this.status != 'engaged'){
                 this.status = 'moving';
+
+                if (Math.abs(dx) > this.mStatuses.retreating.speed){
+                    if (Math.sign(dx) == -1) {
+                        this.orientation = 'L';
+                    } else {
+                        this.orientation = 'R';
+                    }
+                }
             }
 
             this.x += dx
