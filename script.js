@@ -29,7 +29,6 @@ addEventListener('keypress', function(event){
     try {
 
         var index = parseInt(event.key) - 1;
-        console.log(index);
         if (index < unitNames.length){
 
             if (mouse.x < (innerWidth / 2)) {
@@ -160,7 +159,9 @@ var unitTypes = {
             'burst':200,
             'burstPower':10,
             'group':1,
-            'flanking':true
+            'flanking':true,
+            'flankDist':20,
+            'flankAngle': 1
         }
     },
 
@@ -215,7 +216,7 @@ window.addEventListener('keydown', function (event) {
     }
 })
 
-const scale = 1.6;
+const scale = 1.5;
 const offset = 1;
 
 for (const key1 in unitTypes) {
@@ -574,12 +575,7 @@ var Unit = function (x, y, team, type) {
 
                         if (distFunc > 0) {
 
-                            if (this.behaviour.flanking == false) {
-                                var xRatio = Math.abs((opponent.x - this.x)/(Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
-                            } else {
-                                var xRatio = Math.abs((opponent.x - this.x)/(Math.abs((opponent.y - this.y) + (opponent.x - this.x))));
-                            }
-
+                            var xRatio = Math.abs((opponent.x - this.x)/(Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
                             var yRatio = 1 - xRatio;
 
                             var engaged = 1
@@ -591,22 +587,34 @@ var Unit = function (x, y, team, type) {
 
                             var friends = this.behaviour.straggler ** opponent.neighbours.friends.length;
 
-                            console.log(friends);
                             var mRatio = this.morale / opponent.morale;
 
                             // var mMultiplier = (mRatio * this.behaviour.sensitivity) ** this.behaviour.power;
 
+
+
                             if (mRatio >= this.mStatuses.retreating.morale && team != this.team) {
 
-                                xA +=  distFunc * xMultiplier * xRatio / (engaged + friends);
-                                yA +=  distFunc * yMultiplier * yRatio / (engaged + friends);
+
+                                var dxA = distFunc * xMultiplier * xRatio / (engaged + friends);
+                                var dyA = distFunc * yMultiplier * yRatio / (engaged + friends);
+
+                                var flankD = this.flank(opponent, dxA, dyA);
+
+                                
+
+                                xA +=  flankD.dx
+                                yA +=  flankD.dy
                                 tA += distFunc;
                                 // console.log(1 ,x, y, xRatio, yRatio, distFunc, distance);
 
                             } else if (team != this.team){
 
-                                xR -= distFunc * xMultiplier * xRatio / (engaged + friends);
-                                yR -= distFunc * yMultiplier * yRatio / (engaged + friends);
+                                var dxR = distFunc * xMultiplier * xRatio / (engaged + friends);
+                                var dyR= distFunc * yMultiplier * yRatio / (engaged + friends);
+
+                                xR -= dxR
+                                yR -= dyR
                                 tR += distFunc;
                                 // console.log(2, x, y);
 
@@ -640,8 +648,47 @@ var Unit = function (x, y, team, type) {
         y *= (Math.random() + 0.5)
     
         var angle = vectorToAngle(x, y);
+
+
         return angle
         
+    }
+
+    this.flank = function(opponent, dx, dy){
+
+        var flankD = {'dx':dx, 'dy':dy};
+        var xDistance = opponent.x - this.x;
+        var yDistance = opponent.y - this.y;
+
+        if (this.behaviour.flanking == true && yDistance != 0) {
+
+            var flanking = this.size * 2 * this.behaviour.flankDist;
+            var flankAngle = Math.PI / (2 * this.behaviour.flankAngle);
+            var overshoot = 0;
+
+            var xMultiplier = 1;
+            if (this.team == 'Hazza'){
+                xMultiplier = -1;
+            }
+
+
+            var infront = Math.sign(xDistance + (overshoot * xMultiplier)) * xMultiplier;
+            var iAngle = vectorToAngle(dx, dy);
+            console.log(iAngle)
+
+            if (infront == 1 && Math.abs(yDistance) < flanking) {
+                iAngle += flankAngle * Math.sign(yDistance) * xMultiplier * -1;
+            }
+            // } else if ( infront == -1 && Math.abs(yDistance) > flanking){
+            //     iAngle -= flankAngle * Math.sign(yDistance) * xMultiplier * -1;
+            // }
+            console.log(iAngle)
+
+            flankD = angleToVector(iAngle, this.mStatuses[this.mStatus].speed);
+
+        }
+
+        return flankD;
     }
 
     this.calculateObstruction = function(opponent) {
@@ -743,6 +790,7 @@ var Unit = function (x, y, team, type) {
 
         return {'impossible':impossible, 'opponents':opponents, 'enemy':enemy}
     }
+
 
     this.move = function(angle) {
 
@@ -857,6 +905,7 @@ function vectorToAngle(dx,dy) {
 
 function angleToVector(angle, distance) {
 
+    var angle = checkAngle(angle);
     var dx = 0;
     var dy = 0;
 
