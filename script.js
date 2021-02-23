@@ -1,3 +1,8 @@
+import {angleToVector, vectorToAngle} from './vectorFunctions.js';
+import smartMove from './smartMovement.js';
+import {unitNames, unitTypes} from './unitData.js';
+
+
 var canvas = document.querySelector('canvas');
 
 canvas.width = window.innerWidth;
@@ -12,24 +17,24 @@ var mouse = {
     y: undefined
 }
 
-addEventListener('mousemove', function(event) {
+addEventListener('mousemove', function (event) {
     mouse.x = event.x;
     mouse.y = event.y;
 })
 
-addEventListener('resize', function() {
+addEventListener('resize', function () {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 })
 
 
-var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight'];
-addEventListener('keypress', function(event){
+
+addEventListener('keypress', function (event) {
 
     try {
 
         var index = parseInt(event.key) - 1;
-        if (index < unitNames.length){
+        if (index < unitNames.length) {
 
             if (mouse.x < (innerWidth / 2)) {
                 var team = 'Oli';
@@ -46,178 +51,19 @@ addEventListener('keypress', function(event){
 })
 
 
-var unitTypes = {
-    'Longswordsman':{
-
-        'size':7,
-
-        'mStatuses':{
-            'charging':{
-                'speed':0.7,
-                'morale': 3.5
-            },
-            'advancing':{
-                'speed':0.5,
-                'morale': 0.35
-            },
-            'retreating':{
-                'speed':0.2,
-                'morale': 0.1
-            },
-            'routed':{
-                'speed':0.55,
-                'morale': 0
-            }
-        },
-
-        'mMax':300,
-        'hMax':300,
-
-        'formation':{
-            'rows':2,
-            'columns':2
-        },
-
-        'behaviour':{
-
-            'straggler':0.5,
-            'burst':50,
-            'burstPower':5,
-            'group':1,
-            'flanking':false
-
-        }
-    },
-
-    'Swordsman':{
-        'size':6,
-        'mStatuses':{
-            'charging':{
-                'speed':0.8,
-                'morale': 3
-            },
-            'advancing':{
-                'speed':0.6,
-                'morale': 0.5
-            },
-            'retreating':{
-                'speed':0.45,
-                'morale': 0.3
-            },
-            'routed':{
-                'speed':0.75,
-                'morale': 0
-            }
-        },
-        'mMax':100,
-        'hMax':100,
-
-        'formation':{
-            'rows':3,
-            'columns':5
-        },
-
-        'behaviour':{
-            'straggler':1,
-            'burst':50,
-            'burstPower':5,
-            'group':1,
-            'flanking':false
-        }
-    },
-
-    'Cossack':{
-        'size':6,
-        'mStatuses':{
-            'charging':{
-                'speed':1.5,
-                'morale': 1
-            },
-            'advancing':{
-                'speed':0.75,
-                'morale': 0.4
-            },
-            'retreating':{
-                'speed':0.6,
-                'morale': 0.35
-            },
-            'routed':{
-                'speed':1,
-                'morale': 0
-            }
-        },
-        'mMax':70,
-        'hMax':70,
-
-        'formation':{
-            'rows':2,
-            'columns':4
-        },
-
-        'behaviour':{
-            'straggler':5,
-            'burst':200,
-            'burstPower':10,
-            'group':1,
-            'flanking':true,
-            'flankDist':20,
-            'flankAngle': 1
-        }
-    },
-
-    'Knight':{
-        'size':7,
-        'mStatuses':{
-            'charging':{
-                'speed':1.2,
-                'morale': 0.65
-            },
-            'advancing':{
-                'speed':0.65,
-                'morale': 0.6
-            },
-            'retreating':{
-                'speed':0.45,
-                'morale': 0.3
-            },
-            'routed':{
-                'speed':0.95,
-                'morale': 0
-            }
-        },
-        'mMax':300,
-        'hMax':200,
-
-        'formation':{
-            'rows':1,
-            'columns':4
-        },
-
-        'behaviour':{
-            'straggler':0.7,
-            'burst':150,
-            'burstPower':40,
-            'group':1,
-            'flanking':false
-        }
-    }
-}
-
-
-
 var pause = -1
 window.addEventListener('keydown', function (event) {
 
     var key = event.which || event.keyCode;
 
-    if (key == 32) { 
+    if (key == 32) {
         pause *= -1
-      
+
     }
 })
 
 const scale = 1.5;
-const offset = 1;
+const offset = 10;
 
 for (const key1 in unitTypes) {
     if (Object.hasOwnProperty.call(unitTypes, key1)) {
@@ -227,14 +73,14 @@ for (const key1 in unitTypes) {
             if (Object.hasOwnProperty.call(unitType.mStatuses, key2)) {
 
                 unitType.mStatuses[key2].speed *= scale;
-                
+
             }
-        }   
-        
+        }
+
     }
 }
 
-imageClasses = ['L', 'R'];
+var imageClasses = ['L', 'R'];
 var images = {};
 
 for (let index = 0; index < unitNames.length; index++) {
@@ -246,7 +92,7 @@ for (let index = 0; index < unitNames.length; index++) {
 
         images[name][imageClass] = new Image();
         images[name][imageClass].src = name + '-' + imageClass + '.png';
-        
+
     }
 }
 
@@ -257,18 +103,20 @@ for (let index = 0; index < unitNames.length; index++) {
 
 var teamColours = {
     'Oli': {
-        'moving' :'#00fff3',
-        'static' :'#007dff',
-        'engaged':'#0200b9'},
+        'moving': '#00fff3',
+        'static': '#007dff',
+        'engaged': '#0200b9'
+    },
     'Hazza': {
-        'moving':'#ec9b00',
-        'static':'#ec5300',
-        'engaged':'#8b0000'}
+        'moving': '#ec9b00',
+        'static': '#ec5300',
+        'engaged': '#8b0000'
+    }
 };
 
 var units = {
     'Oli': [],
-    'Hazza':[]
+    'Hazza': []
 };
 
 var Unit = function (x, y, team, type) {
@@ -299,8 +147,9 @@ var Unit = function (x, y, team, type) {
     this.mStatus = 'advancing';
 
     this.neighbours = {
-        'friends':[],
-        'enemies':[]
+        'friends': [],
+        'enemies': [],
+        'outofrange': []
     }
 
     if (team == 'Oli') {
@@ -339,17 +188,18 @@ var Unit = function (x, y, team, type) {
             // this.move(5/4*Math.PI);
         }
 
+        this.checkOutofrange();
         this.edgeCheck();
 
 
     }
 
-    this.distance = function (x,y) {
+    this.distance = function (x, y) {
 
-        return Math.sqrt(((x - this.x)**2) + ((y - this.y)**2))
+        return Math.sqrt(((x - this.x) ** 2) + ((y - this.y) ** 2))
     }
 
-    this.moralise = function() {
+    this.moralise = function () {
 
         this.morale = this.baseMorale;
 
@@ -373,104 +223,19 @@ var Unit = function (x, y, team, type) {
         }
     }
 
-    this.calculateMorale = function(friend) {
+
+    this.calculateMorale = function (friend) {
 
         var distance = this.distance(friend.x, friend.y);
 
-        var distFunc = (offset + this.size + friend.size)/(distance);
+        var distFunc = (offset + this.size + friend.size) / (distance);
 
         this.morale += distFunc * friend.baseMorale;
     }
 
-    this.restrictDistance = function(tAngle, opponents){
+    
 
-        var travel = undefined;
-        var combatant = undefined;
-
-        for (let index = 0; index < opponents.length; index++) {
-
-            // console.log('travel: ' + travel);
-            const opponent = opponents[index];
-
-            var x = opponent.x;
-            var y = opponent.y;
-            var size = opponent.size;
-
-            var dx = x - this.x;
-            var dy = y - this.y;
-            var distance = this.distance(x, y);
-            // console.log('distance: ' + distance);
-            var gap = size + this.size + offset;
-            // console.log('gap: ' + gap);
-            var oAngle = vectorToAngle(dx, dy);
-            // console.log('oAngle: ' + oAngle);
-
-            var angle = checkAngle(Math.abs(tAngle - oAngle));
-            // console.log('angle: ' + angle);
-            if (angle > Math.PI) {
-                angle = (Math.PI * 2) - angle;
-            }
-            // console.log('adjusted angle: ' + angle);
-            if (angle != Math.PI && angle != 0) {
-
-                var b = -2 * distance * Math.cos(angle);
-                var c = (distance ** 2) - (gap ** 2);
-
-                var discriminant = (b ** 2) - (4 * c);
-                // console.log('discriminant: ' + discriminant);
-
-                if (discriminant >= 0) {
-                    var nTravel = ((b * -1) - Math.sqrt(discriminant)) / 2;
-                    // console.log('nTravel: ' + nTravel);
-                }
-
-                if (travel == undefined) {
-                    travel = nTravel;
-                    combatant = opponent;
-                } else if (nTravel < travel){
-                    travel = nTravel;
-                    combatant = opponent;
-                }
-
-            }
-        }
-
-
-        if (travel == undefined) {
-            travel = 0;
-        }
-
-        if (combatant != undefined) {
-            if (combatant.team != this.team && this.morale > combatant.morale /3){
-                this.status = 'engaged';
-
-                if (this.neighbours.enemies.includes(combatant) == false){
-                    this.neighbours.enemies.push(combatant);
-                }
-
-                combatant.status = 'engaged';
-
-                if (combatant.neighbours.enemies.includes(this) == false){
-                    combatant.neighbours.enemies.push(this);
-                }
-            } else if (combatant.team == this.team && combatant != this){
-
-                if (this.neighbours.friends.includes(combatant) == false){
-                    this.neighbours.friends.push(combatant);
-                }
-
-                if (combatant.neighbours.friends.includes(this) == false){
-                    combatant.neighbours.friends.push(this);
-                }
-
-            }
-        }
-
-        return travel;
-        
-    }
-
-    this.fightCheck = function() {
+    this.fightCheck = function () {
 
         var fight = true
         if (this.status == 'engaged') {
@@ -479,14 +244,17 @@ var Unit = function (x, y, team, type) {
                 const enemy = this.neighbours.enemies[index];
                 var mRatio = this.morale / enemy.morale
 
-                if (mRatio < this.mStatuses.retreating.morale) {
+                var gap = enemy.size + this.size + offset + (this.behaviour.range * this.size)
+                var distance = this.distance(enemy.x, enemy.y)
+
+                if (mRatio < this.mStatuses.retreating.morale || distance < gap) {
                     fight = false;
                     //break;
                 }
-                
+
             }
 
-            if (fight == false){
+            if (fight == false) {
 
                 this.emptyNeighbours('enemies');
                 this.status = 'moving';
@@ -494,46 +262,78 @@ var Unit = function (x, y, team, type) {
         }
     };
 
-    this.delete = function() {
+    this.delete = function () {
         this.emptyNeighbours('enemies');
         this.emptyNeighbours('friends');
+        this.emptyNeighbours('outofrange');
 
         for (let index = 0; index < units[this.team].length; index++) {
             const mate = units[this.team][index];
-                                   
-            if ( mate === this) { 
-                units[this.team].splice(index, 1); 
-                index--; 
+
+            if (mate === this) {
+                units[this.team].splice(index, 1);
+                index--;
             }
         }
-        
+
     }
 
-    this.edgeCheck = function() {
-        if (this.x < 0 || this.y < 0 || this.x > innerWidth || this.y > innerHeight){
+    this.edgeCheck = function () {
+        if (this.x < 0 || this.y < 0 || this.x > innerWidth || this.y > innerHeight) {
             this.delete();
         }
     }
 
-    this.emptyNeighbours = function(list) {
+    this.emptyNeighbours = function (list) {
 
         for (let index = 0; index < this.neighbours[list].length; index++) {
-                    const enemy = this.neighbours[list][index];
+            const enemy = this.neighbours[list][index];
 
-                    for( var i = 0; i < enemy.neighbours[list].length; i++){ 
-                                   
-                        if ( enemy.neighbours[list][i] === this) { 
-                            enemy.neighbours[list].splice(i, 1); 
-                            i--; 
-                        }
-                    }
+            for (var i = 0; i < enemy.neighbours[list].length; i++) {
 
-                    if (enemy.neighbours[list].length == 0 && list == 'enemies') {
-                        enemy.status = 'moving';
+                if (enemy.neighbours[list][i] === this) {
+                    enemy.neighbours[list].splice(i, 1);
+                    i--;
+                }
+            }
+
+            if (enemy.neighbours[list].length == 0 && list == 'enemies') {
+                enemy.status = 'moving';
+            }
+        }
+
+        this.neighbours[list] = [];
+    }
+
+    this.checkOutofrange = function () {
+
+        for (let index = 0; index < this.neighbours.outofrange.length; index++) {
+            const enemy = this.neighbours.outofrange[index];
+
+            var gap = enemy.size + this.size + offset + (enemy.behaviour.range * enemy.size);
+            var distance = this.distance(enemy.x, enemy.y);
+
+            if (distance != gap) {
+
+                for (var i = 0; i < enemy.neighbours.enemies.length; i++) {
+
+                    if (enemy.neighbours.enemies[i] === this) {
+                        enemy.neighbours.enemies.splice(i, 1);
+                        i--;
                     }
                 }
 
-                this.neighbours[list] = [];
+                if (enemy.neighbours.enemies.length == 0) {
+                    enemy.status = 'moving';
+                }
+
+                this.neighbours.outofrange.splice(index, 1);
+                index--;
+            }
+
+
+
+        }
     }
 
 
@@ -555,7 +355,7 @@ var Unit = function (x, y, team, type) {
             if (Object.hasOwnProperty.call(units, team)) {
 
 
-                    
+
                 for (let i = 0; i < units[team].length; i++) {
 
                     // console.log('a', x, y);
@@ -566,18 +366,19 @@ var Unit = function (x, y, team, type) {
 
                         var distance = this.distance(opponent.x, opponent.y);
 
-                        var xMultiplier = 1;
-                        var yMultiplier = 1;
+                        var xMultiplier = Math.sign(opponent.x - this.x);
+                        var yMultiplier = Math.sign(opponent.y - this.y);
 
-                        if (opponent.x < this.x) {
-                            xMultiplier = -1
-                        }
-                            
-                        if (opponent.y < this.y) {
-                            yMultiplier = -1
+
+
+                        var gap = opponent.size + this.size + offset;
+
+
+                        if (opponent.team != this.team && distance >= gap) {
+                            gap += this.behaviour.range * this.size
                         }
 
-                        var distFunc = Math.sin(1/(accentuate * ((distance - this.size - opponent.size - offset)/diagonal)));
+                        var distFunc = Math.sin(1 / (accentuate * ((distance - gap) / diagonal)));
                         if (distFunc < 0) {
                             distFunc *= -1;
                         }
@@ -587,7 +388,7 @@ var Unit = function (x, y, team, type) {
 
                         if (distFunc > 0) {
 
-                            var xRatio = Math.abs((opponent.x - this.x)/(Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
+                            var xRatio = Math.abs((opponent.x - this.x) / (Math.abs(opponent.y - this.y) + Math.abs(opponent.x - this.x)));
                             var yRatio = 1 - xRatio;
 
                             var engaged = 1
@@ -613,17 +414,17 @@ var Unit = function (x, y, team, type) {
 
                                 var flankD = this.flank(opponent, dxA, dyA);
 
-                                
 
-                                xA +=  flankD.dx
-                                yA +=  flankD.dy
+
+                                xA += flankD.dx
+                                yA += flankD.dy
                                 tA += distFunc;
                                 // console.log(1 ,x, y, xRatio, yRatio, distFunc, distance);
 
-                            } else if (team != this.team){
+                            } else if (team != this.team) {
 
                                 var dxR = distFunc * xMultiplier * xRatio / (engaged + friends);
-                                var dyR= distFunc * yMultiplier * yRatio / (engaged + friends);
+                                var dyR = distFunc * yMultiplier * yRatio / (engaged + friends);
 
                                 xR -= dxR
                                 yR -= dyR
@@ -637,8 +438,8 @@ var Unit = function (x, y, team, type) {
                     }
 
                 }
-                
-            
+
+
             }
         }
 
@@ -647,9 +448,9 @@ var Unit = function (x, y, team, type) {
 
         if (tA >= tR * this.mStatuses.charging.morale) {
             this.mStatus = 'charging';
-        }else if (tA >= tR * this.mStatuses.advancing.morale) {
+        } else if (tA >= tR * this.mStatuses.advancing.morale) {
             this.mStatus = 'advancing';
-        }else if (tA >= tR * this.mStatuses.retreating.morale) {
+        } else if (tA >= tR * this.mStatuses.retreating.morale) {
             this.mStatus = 'retreating';
         } else {
             this.mStatus = 'routed';
@@ -658,17 +459,17 @@ var Unit = function (x, y, team, type) {
 
         x *= (Math.random() + 0.5)
         y *= (Math.random() + 0.5)
-    
+
         var angle = vectorToAngle(x, y);
 
 
         return angle
-        
+
     }
 
-    this.flank = function(opponent, dx, dy){
+    this.flank = function (opponent, dx, dy) {
 
-        var flankD = {'dx':dx, 'dy':dy};
+        var flankD = { 'dx': dx, 'dy': dy };
         var xDistance = opponent.x - this.x;
         var yDistance = opponent.y - this.y;
 
@@ -679,7 +480,7 @@ var Unit = function (x, y, team, type) {
             var overshoot = 0;
 
             var xMultiplier = 1;
-            if (this.team == 'Hazza'){
+            if (this.team == 'Hazza') {
                 xMultiplier = -1;
             }
 
@@ -698,272 +499,11 @@ var Unit = function (x, y, team, type) {
         return flankD;
     }
 
-    this.calculateObstruction = function(opponent) {
 
-        var blocks = [];
+    this.move = function (angle) {smartMove(this, this.mStatuses[this.mStatus].speed, angle, units, offset)}
 
-        var distance = this.distance(opponent.x, opponent.y);
-        var gap = opponent.size + this.size + offset;
-        var angle = vectorToAngle(opponent.x - this.x, opponent.y - this.y);
-
-        if (distance - gap == this.mStatuses[this.mStatus].speed) {
-            blocks.push({'opponent':opponent, 'lower':angle, 'upper':angle})
-        } else {
-
-            var value = ((distance ** 2) + (this.mStatuses[this.mStatus].speed ** 2) - (gap ** 2))/(2 * distance * this.mStatuses[this.mStatus].speed);
-            var overshoot = Math.acos(value);
-
-            var angle = vectorToAngle(opponent.x - this.x, opponent.y - this.y);
-
-            var upper = angle + overshoot;
-            var lower = angle - overshoot;
-            
-            if (lower < 0) {
-                blocks.push({'opponent': opponent, 'lower':checkAngle(lower), 'upper': Math.PI * 2});
-                blocks.push({'opponent': opponent, 'lower':0, 'upper':upper});
-
-            } else if (upper > Math.PI * 2) {
-                blocks.push({'opponent': opponent, 'lower':lower, 'upper': Math.PI * 2});
-                blocks.push({'opponent': opponent, 'lower':0, 'upper':checkAngle(upper)});
-
-            } else {
-                blocks.push({'opponent': opponent, 'lower':lower, 'upper':upper});
-            }
-        }
-
-        return blocks;
-    }
-
-
-    this.assessSurroundings = function () {
-
-        var obstructions = [];
-
-        for (const team in units) {
-            if (Object.hasOwnProperty.call(units, team)) {
-                    
-                for (let i = 0; i < units[team].length; i++) {
-                        
-                    var opponent = units[team][i];
-                        
-                    if (this != opponent) {
-
-                        if (this.distance(opponent.x, opponent.y) - this.size - opponent.size - offset <= this.mStatuses[this.mStatus].speed) {
-                            
-                            var blocks = this.calculateObstruction(opponent);
-
-
-                            for (let index = 0; index < blocks.length; index++) {
-                                obstructions.push(blocks[index]);
-                                
-                            }
-
-
-                        }
-                    }
-                }
-            }
-        }
-
-        return obstructions;
-    }
-
-    this.moderateAngle = function(angle, obstructions) {
-
-        var opponents = [];
-        var impossible = false;
-        var enemy = false;
-        if (obstructions.length > 0) {
-        
-            for (let index = 0; index < obstructions.length; index++) {
-                const obstruction = obstructions[index];
-
-                if (angle >= obstruction.lower && angle <= obstruction.upper){
-
-                    impossible = true;
-                    opponents.push(obstruction.opponent);
-
-                    //abc
-                    if (this.team != obstruction.opponent.team) {
-                        enemy = true;
-                    }
-
-                }
-
-            }
-
-        } 
-
-
-        return {'impossible':impossible, 'opponents':opponents, 'enemy':enemy}
-    }
-
-
-    this.move = function(angle) {
-
-
-        var repeats = 200;
-
-        if (angle != undefined) {
-
-            var obstructions = this.assessSurroundings();
-
-            var increment = (Math.PI * 2) / repeats;
-            var stats = this.moderateAngle(angle, obstructions)
-
-            var repeat = 0;
-            var reverse = 1;
-            
-            // if (this.y < innerHeight / 2) {
-            //     var reverse = 1;
-            // } else {
-            //     var reverse = -1;
-            // }
-
-            while (stats.impossible == true) {
-
-                repeat += 1
-                angle = checkAngle(angle + (increment * repeat * reverse));
-                stats = this.moderateAngle(angle, obstructions);
-
-                if (stats.enemy) {
-                    break;
-
-                }
-
-
-                reverse *= - 1;
-                
-                if (repeat == repeats) {
-                    break;
-                }
-            }
-            
-            this.emptyNeighbours('friends');
-
-            if (stats.impossible == false) {
-                var vector = angleToVector(angle, this.mStatuses[this.mStatus].speed);
-            } else {
-                // console.log(stats)
-                var vector = angleToVector(angle, this.restrictDistance(angle, stats.opponents));
-            }
-
-
-            var dx = vector.dx;
-            var dy = vector.dy;
-
-            if (dy == 0 && dx == 0 && this.status != 'engaged'){
-                this.status = 'static';
-            } else if (this.status != 'engaged'){
-                this.status = 'moving';
-
-                if (Math.abs(dx) > this.mStatuses.retreating.speed){
-                    if (Math.sign(dx) == -1) {
-                        this.orientation = 'L';
-                    } else {
-                        this.orientation = 'R';
-                    }
-                }
-            }
-
-            this.x += dx
-            this.y += dy
-            
-
-            
-        } else {
-            this.status = 'static';
-        }
-
-        this.draw();
-    } 
 }
 
-function vectorToAngle(dx,dy) {
-    // console.log(dx, dy);
-
-    var angle = undefined;
-
-    if (dx != 0 || dy != 0) {
-
-        if (dx == 0) {
-
-            if (dy > 0) {
-                angle = Math.PI;
-            } else {
-                angle = 0;
-            }
-        } else if (dy == 0) {
-
-            if (dx > 0) {
-                angle = 0.5 * Math.PI;
-            } else {
-                angle = 1.5 * Math.PI;
-            }
-        } else {
-            angle = Math.atan(dx / dy) * -1;
-
-            if (Math.sign(dy) == 1) {
-                angle += Math.PI;
-            } else if (Math.sign(dy) == -1) {
-                angle += 2* Math.PI;
-            }
-            
-        }
-
-    }
-
-    angle = checkAngle(angle);
-    // console.log(angle);
-    return angle
-}
-
-function angleToVector(angle, distance) {
-
-    var angle = checkAngle(angle);
-    var dx = 0;
-    var dy = 0;
-
-    if (angle != undefined && distance != 0) {
-        if (angle == 0) {
-            dy = -1 * distance;
-            dx = 0;
-        } else if (angle == Math.PI){
-            dy = distance
-            dx = 0;
-
-        } else if (angle == Math.PI * 0.5){
-            dx = distance;
-            dy = 0;
-
-        } else if (angle == Math.PI * 1.5){
-            dx = distance * -1;
-            dy = 0;
-
-        } else {
-            dx = distance * Math.sin(angle);
-            dy = -1 * distance * Math.cos(angle);
-        }
-    }
-
-
-    return {'dx': dx, 'dy': dy}
-}
-
-function checkAngle(angle) {
-
-    if (angle >= 2 * Math.PI) {
-
-        angle -= (Math.PI * 2 * Math.floor(angle/(Math.PI * 2)))
-    }
-
-    if (angle < 0) {
-        angle += (Math.PI * 2 * (Math.floor(Math.abs(angle/(Math.PI * 2)) + 1)))
-    }
-
-    return angle;
-    
-}
 
 function createFormation(team, X, Y, type) {
 
@@ -971,7 +511,7 @@ function createFormation(team, X, Y, type) {
     var columns = unitTypes[type].formation.columns;
     // pause = -1;
 
-    var increment = (unitTypes[type].size * scale *2) + offset;
+    var increment = (unitTypes[type].size * scale * 2) + offset + 2;
     for (var r = 0; r < rows; r++) {
         for (var c = 0; c < columns; c++) {
 
@@ -988,7 +528,7 @@ function createFormation(team, X, Y, type) {
 
 
 
-var animate = function() {
+var animate = function () {
     requestAnimationFrame(animate);
 
     if (pause == 1) {
@@ -1001,10 +541,10 @@ var animate = function() {
 
                 for (let i = 0; i < units[team].length; i++) {
                     units[team][i].update();
-            
+
                 }
-                
-            } 
+
+            }
         }
     }
 }
