@@ -1,6 +1,9 @@
 import {angleToVector, vectorToAngle} from './vectorFunctions.js';
+import smartMorale from './smartMorale.js';
 import smartMove from './smartMovement.js';
+import smartAttack from './smartAttack.js';
 import {unitNames, unitTypes} from './unitData.js';
+import createImages from './imageController.js';
 
 
 var canvas = document.querySelector('canvas');
@@ -80,26 +83,7 @@ for (const key1 in unitTypes) {
     }
 }
 
-var imageClasses = ['L', 'R'];
-var images = {};
-
-for (let index = 0; index < unitNames.length; index++) {
-    const name = unitNames[index];
-    images[name] = {};
-
-    for (let i = 0; i < imageClasses.length; i++) {
-        const imageClass = imageClasses[i];
-
-        images[name][imageClass] = new Image();
-        images[name][imageClass].src = name + '-' + imageClass + '.png';
-
-    }
-}
-
-
-// img.onload = function () {
-//     c.drawImage(img, 20, 20, width, height);
-// }
+var images = createImages();
 
 var teamColours = {
     'Oli': {
@@ -145,12 +129,9 @@ var Unit = function (x, y, team, type) {
 
     this.status = 'moving';
     this.mStatus = 'advancing';
+    this.moraleRatio = 1;
 
-    this.neighbours = {
-        'friends': [],
-        'enemies': [],
-        'outofrange': []
-    }
+    this.enemies = [];
 
     if (team == 'Oli') {
         this.orientation = 'R';
@@ -179,16 +160,14 @@ var Unit = function (x, y, team, type) {
 
         this.draw();
 
-        this.moralise();
-        this.fightCheck();
+        smartMorale(this, units, offset);
+        smartAttack(this, units, offset);
 
         if (this.mStatuses[this.mStatus].speed > 0 && this.status != 'engaged') {
 
             this.move(this.chooseTarget());
-            // this.move(5/4*Math.PI);
         }
 
-        this.checkOutofrange();
         this.edgeCheck();
 
 
@@ -199,73 +178,7 @@ var Unit = function (x, y, team, type) {
         return Math.sqrt(((x - this.x) ** 2) + ((y - this.y) ** 2))
     }
 
-    this.moralise = function () {
-
-        this.morale = this.baseMorale;
-
-        if (this.behaviour.burst > 0) {
-            this.behaviour.burst -= 1;
-            this.morale *= this.behaviour.burstPower;
-        }
-
-        for (const team in units) {
-            if (Object.hasOwnProperty.call(units, team)) {
-
-                for (let i = 0; i < units[team].length; i++) {
-
-                    var opponent = units[team][i];
-
-                    if (this != opponent && team == this.team) {
-                        this.calculateMorale(opponent);
-                    }
-                }
-            }
-        }
-    }
-
-
-    this.calculateMorale = function (friend) {
-
-        var distance = this.distance(friend.x, friend.y);
-
-        var distFunc = (offset + this.size + friend.size) / (distance);
-
-        this.morale += distFunc * friend.baseMorale;
-    }
-
-    
-
-    this.fightCheck = function () {
-
-        var fight = true
-        if (this.status == 'engaged') {
-
-            for (let index = 0; index < this.neighbours.enemies.length; index++) {
-                const enemy = this.neighbours.enemies[index];
-                var mRatio = this.morale / enemy.morale
-
-                var gap = enemy.size + this.size + offset + (this.behaviour.range * this.size)
-                var distance = this.distance(enemy.x, enemy.y)
-
-                if (mRatio < this.mStatuses.retreating.morale || distance < gap) {
-                    fight = false;
-                    //break;
-                }
-
-            }
-
-            if (fight == false) {
-
-                this.emptyNeighbours('enemies');
-                this.status = 'moving';
-            }
-        }
-    };
-
     this.delete = function () {
-        this.emptyNeighbours('enemies');
-        this.emptyNeighbours('friends');
-        this.emptyNeighbours('outofrange');
 
         for (let index = 0; index < units[this.team].length; index++) {
             const mate = units[this.team][index];
@@ -276,6 +189,7 @@ var Unit = function (x, y, team, type) {
             }
         }
 
+
     }
 
     this.edgeCheck = function () {
@@ -283,59 +197,6 @@ var Unit = function (x, y, team, type) {
             this.delete();
         }
     }
-
-    this.emptyNeighbours = function (list) {
-
-        for (let index = 0; index < this.neighbours[list].length; index++) {
-            const enemy = this.neighbours[list][index];
-
-            for (var i = 0; i < enemy.neighbours[list].length; i++) {
-
-                if (enemy.neighbours[list][i] === this) {
-                    enemy.neighbours[list].splice(i, 1);
-                    i--;
-                }
-            }
-
-            if (enemy.neighbours[list].length == 0 && list == 'enemies') {
-                enemy.status = 'moving';
-            }
-        }
-
-        this.neighbours[list] = [];
-    }
-
-    this.checkOutofrange = function () {
-
-        for (let index = 0; index < this.neighbours.outofrange.length; index++) {
-            const enemy = this.neighbours.outofrange[index];
-
-            var gap = enemy.size + this.size + offset + (enemy.behaviour.range * enemy.size);
-            var distance = this.distance(enemy.x, enemy.y);
-
-            if (distance != gap) {
-
-                for (var i = 0; i < enemy.neighbours.enemies.length; i++) {
-
-                    if (enemy.neighbours.enemies[i] === this) {
-                        enemy.neighbours.enemies.splice(i, 1);
-                        i--;
-                    }
-                }
-
-                if (enemy.neighbours.enemies.length == 0) {
-                    enemy.status = 'moving';
-                }
-
-                this.neighbours.outofrange.splice(index, 1);
-                index--;
-            }
-
-
-
-        }
-    }
-
 
     this.chooseTarget = function () {
 
@@ -395,22 +256,20 @@ var Unit = function (x, y, team, type) {
 
                             if (opponent.status == 'engaged') {
 
-                                engaged = opponent.neighbours.enemies.length * this.behaviour.group;
+                                engaged = opponent.enemies.length * this.behaviour.group;
                             }
 
-                            var friends = this.behaviour.straggler ** opponent.neighbours.friends.length;
-
-                            var mRatio = this.morale / opponent.morale;
+                            var mRatio = this.moraleRatio;
 
                             // var mMultiplier = (mRatio * this.behaviour.sensitivity) ** this.behaviour.power;
 
 
 
-                            if (mRatio >= this.mStatuses.retreating.morale && team != this.team) {
+                            if (this.mStatus != 'routed' && this.mStatuses != 'retreating' && team != this.team) {
 
 
-                                var dxA = distFunc * xMultiplier * xRatio / (engaged + friends);
-                                var dyA = distFunc * yMultiplier * yRatio / (engaged + friends);
+                                var dxA = distFunc * xMultiplier * xRatio / (engaged);
+                                var dyA = distFunc * yMultiplier * yRatio / (engaged);
 
                                 var flankD = this.flank(opponent, dxA, dyA);
 
@@ -423,8 +282,8 @@ var Unit = function (x, y, team, type) {
 
                             } else if (team != this.team) {
 
-                                var dxR = distFunc * xMultiplier * xRatio / (engaged + friends);
-                                var dyR = distFunc * yMultiplier * yRatio / (engaged + friends);
+                                var dxR = distFunc * xMultiplier * xRatio / (engaged);
+                                var dyR = distFunc * yMultiplier * yRatio / (engaged);
 
                                 xR -= dxR
                                 yR -= dyR
@@ -445,16 +304,6 @@ var Unit = function (x, y, team, type) {
 
         x = xA + xR;
         y = yA + yR;
-
-        if (tA >= tR * this.mStatuses.charging.morale) {
-            this.mStatus = 'charging';
-        } else if (tA >= tR * this.mStatuses.advancing.morale) {
-            this.mStatus = 'advancing';
-        } else if (tA >= tR * this.mStatuses.retreating.morale) {
-            this.mStatus = 'retreating';
-        } else {
-            this.mStatus = 'routed';
-        }
 
 
         x *= (Math.random() + 0.5)

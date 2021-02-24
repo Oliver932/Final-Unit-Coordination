@@ -1,5 +1,5 @@
 
-export function remove(list, element){
+export function removeItem(list, element){
 
     for( var i = 0; i < list; i++){ 
                                     

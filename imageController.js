@@ -1,7 +1,9 @@
+import {unitNames, imageClasses} from './unitData.js';
 
-imageClasses = ['L', 'R'];
+//loads all images with appropriate classes
 
-export function createImages(unitNames){
+export default function createImages(){
+
     var images = {};
 
     for (let index = 0; index < unitNames.length; index++) {
@@ -12,7 +14,7 @@ export function createImages(unitNames){
             const imageClass = imageClasses[i];
 
             images[name][imageClass] = new Image();
-            images[name][imageClass].src = name + '-' + imageClass + '.png';
+            images[name][imageClass].src = 'images/' + name + '-' + imageClass + '.png';
             
         }
     }
