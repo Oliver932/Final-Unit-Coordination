@@ -1,4 +1,5 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
+import {unitNames, unitTypes} from './unitData.js';
 
 // item and individual units require size, x, y, behaviour.range, status, orientation and team properties
 // item and individual units must also have .delete method
@@ -89,7 +90,7 @@ function moderateAngle(item, travel, travelAngle, objects, restrict, offset, dir
             var gap = item.size + offset + obj.size;
 
             if (item.team != obj.team) {
-                gap += (item.behaviour.range * item.size);
+                gap += (unitTypes[item.type].behaviour.range * item.size);
             }
 
             var data = obstacleData(item.x, item.y, obj.x, obj.y, travel, travelAngle, gap);
@@ -225,7 +226,7 @@ function doMove(item, angle, travel) {
     } else if (item.status != 'engaged') {
         item.status = 'moving';
 
-        if (Math.abs(dx) > item.mStatuses.retreating.speed) {
+        if (Math.abs(dx) > unitTypes[item.type].mStatuses.retreating.speed) {
             if (Math.sign(dx) == -1) {
                 item.orientation = 'L';
             } else {
@@ -240,36 +241,34 @@ function doMove(item, angle, travel) {
 }
 
 function withinRange(item, units, offset){
-        var obstructions = [];
 
-        for (const team in units) {
-            if (Object.hasOwnProperty.call(units, team)) {
 
-                for (let i = 0; i < units[team].length; i++) {
+    var obstructions = [];
 
-                    var opponent = units[team][i];
+    for (let i = 0; i < units.length; i++) {
 
-                    var gap = opponent.size + item.size + offset;
+        var opponent = units[i];
 
-                    if (opponent.team != item.team) {
-                        gap += item.behaviour.range * item.size
-                    }
+        var gap = opponent.size + item.size + offset;
 
+        if (opponent.team != item.team) {
+            gap += unitTypes[item.type].behaviour.range * item.size
+        }
 
 
 
-                    if (item != opponent) {
 
-                        var distance = dist(item.x, item.y, opponent.x, opponent.y);
+        if (item != opponent) {
 
-                        if (distance - gap <= item.mStatuses[item.mStatus].speed) {
-                            obstructions.push(opponent);
-                        }
-                    }
-                }
+            var distance = dist(item.x, item.y, opponent.x, opponent.y);
+
+            if (distance - gap <= unitTypes[item.type].mStatuses[item.mStatus].speed) {
+                obstructions.push(opponent);
             }
         }
-        return obstructions;
+
+    }
+    return obstructions;
 
     }
 

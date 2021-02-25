@@ -1,31 +1,26 @@
 import {dist} from './vectorFunctions.js';
+import {unitNames, unitTypes} from './unitData.js';
 
 export default function smartMorale (item, units, offset) {
 
     var attraction = 1;
     var repulsion = 1;
 
+    for (let i = 0; i < units.length; i++) {
 
-    for (const team in units) {
-        if (Object.hasOwnProperty.call(units, team)) {
+        var object = units[i];
 
-            for (let i = 0; i < units[team].length; i++) {
+        if (object != item) {
 
-                var object = units[team][i];
+            var moraleModifier = calculateMorale(item, object, offset);
 
-                if (object != item) {
+            if (object.team == item.team) {
 
-                    var moraleModifier = calculateMorale(item, object, offset);
+                attraction += moraleModifier;
+                
+            } else {
 
-                    if (team == item.team) {
-
-                        attraction += moraleModifier;
-                        
-                    } else {
-
-                        repulsion += moraleModifier;
-                    }
-                }
+                repulsion += moraleModifier;
             }
         }
     }
@@ -41,15 +36,15 @@ function calculateMStatus(item) {
 
     item.mStatus = 'charging';
     
-    if (item.moraleRatio < item.mStatuses.charging.morale) {
+    if (item.moraleRatio < unitTypes[item.type].mStatuses.charging.morale) {
 
         item.mStatus = 'advancing';
 
-        if (item.moraleRatio < item.mStatuses.advancing.morale) {
+        if (item.moraleRatio < unitTypes[item.type].mStatuses.advancing.morale) {
 
             item.mStatus = 'retreating';
 
-            if (item.moraleRatio < item.mStatuses.retreating.morale) {
+            if (item.moraleRatio < unitTypes[item.type].mStatuses.retreating.morale) {
 
                 item.mStatus = 'routed';
             }

@@ -66,23 +66,7 @@ window.addEventListener('keydown', function (event) {
     }
 })
 
-const scale = 0.75;
 const offset = 4;
-
-for (const key1 in unitTypes) {
-    if (Object.hasOwnProperty.call(unitTypes, key1)) {
-        const unitType = unitTypes[key1];
-
-        for (const key2 in unitType.mStatuses) {
-            if (Object.hasOwnProperty.call(unitType.mStatuses, key2)) {
-
-                unitType.mStatuses[key2].speed *= scale;
-
-            }
-        }
-
-    }
-}
 
 var images = createImages();
 
@@ -99,33 +83,20 @@ var teamColours = {
     }
 };
 
-var units = {
-    'Oli': [],
-    'Hazza': []
-};
+var units = [];
 
 var Unit = function (x, y, team, type) {
 
     this.x = x;
     this.y = y;
 
-    this.size = unitTypes[type].size * scale;
-
-    this.mMax = unitTypes[type].mMax;
-    this.mStatuses = unitTypes[type].mStatuses;
-
-    this.hMax = unitTypes[type].hMax;
-    this.behaviour = unitTypes[type].behaviour;
-
-    this.images = images[type];
-
-
     this.team = team;
     this.type = type;
 
-    this.baseMorale = this.mMax;
-    this.morale = this.mMax;
-    this.health = this.hMax;
+    this.morale = unitTypes[type].mMax;
+    this.health = unitTypes[type].hMax;
+
+    this.size =  unitTypes[type].size * (this.health / 100);
 
 
     this.status = 'moving';
@@ -144,6 +115,8 @@ var Unit = function (x, y, team, type) {
 
     this.draw = function () {
 
+        var image = images[this.type][this.orientation];
+
         c.beginPath();
         c.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
         c.fillStyle = teamColours[this.team][this.status];
@@ -154,7 +127,7 @@ var Unit = function (x, y, team, type) {
             multiplier = -0.3;
         }
 
-        c.drawImage(this.images[this.orientation], this.x + (this.size * 3 * multiplier), this.y - this.size * 2, this.size * 4, this.size * 4);
+        c.drawImage(image, this.x + (this.size * 3 * multiplier), this.y - this.size * 2, this.size * 4, this.size * 4);
     }
 
     this.update = function () {
@@ -162,9 +135,9 @@ var Unit = function (x, y, team, type) {
         smartMorale(this, units, offset);
         smartAttack(this, units, offset);
 
-        if (this.mStatuses[this.mStatus].speed > 0 && this.status != 'engaged') {
+        if (unitTypes[this.type].mStatuses[this.mStatus].speed > 0 && this.status != 'engaged') {
 
-            smartMove(this, this.mStatuses[this.mStatus].speed, smartTarget(this, units), units, offset);
+            smartMove(this, unitTypes[this.type].mStatuses[this.mStatus].speed, smartTarget(this, units), units, offset);
         }
 
         this.draw();
@@ -174,11 +147,11 @@ var Unit = function (x, y, team, type) {
 
     this.delete = function () {
 
-        for (let index = 0; index < units[this.team].length; index++) {
-            const mate = units[this.team][index];
+        for (let index = 0; index < units.length; index++) {
+            const mate = units[index];
 
             if (mate === this) {
-                units[this.team].splice(index, 1);
+                units.splice(index, 1);
                 index--;
             }
         }
@@ -194,12 +167,12 @@ function createFormation(team, X, Y, type) {
     var columns = unitTypes[type].formation.columns;
     // pause = -1;
 
-    var increment = (unitTypes[type].size * scale * 2) + offset + 2;
+    var increment = (unitTypes[type].size * 2 * (unitTypes[type].hMax / 100)) + offset + 2;
     for (var r = 0; r < rows; r++) {
         for (var c = 0; c < columns; c++) {
 
-            units[team].push(new Unit(X + (c * increment), Y + (r * increment), team, type));
-            units[team][units[team].length - 1].draw();
+            units.push(new Unit(X + (c * increment), Y + (r * increment), team, type));
+            units[units.length - 1].draw();
             // console.log(team);
 
 
@@ -219,15 +192,9 @@ var animate = function () {
         c.fillStyle = 'rgba(255, 255, 255, 1)';
         c.fillRect(0, 0, innerWidth, innerHeight)
 
-        for (const team in units) {
-            if (Object.hasOwnProperty.call(units, team)) {
+        for (let i = 0; i < units.length; i++) {
+            units[i].update();
 
-                for (let i = 0; i < units[team].length; i++) {
-                    units[team][i].update();
-
-                }
-
-            }
         }
     }
 }

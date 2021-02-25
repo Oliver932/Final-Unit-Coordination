@@ -1,5 +1,6 @@
 
 // stores all raw unit data and stats
+const scale = 0.75;
 
 export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman'];
 
@@ -8,26 +9,26 @@ export var imageClasses = ['L', 'R'];
 export var unitTypes = {
     'Longswordsman':{
 
-        'size':7,
+        'size':4 * scale,
 
         'mStatuses':{
             'charging':{
-                'speed':0.72,
+                'speed':0.72 * scale,
                 'morale': 3.5,
                 'damage':4
             },
             'advancing':{
-                'speed':0.5,
+                'speed':0.5 * scale,
                 'morale': 0.35,
                 'damage':4
             },
             'retreating':{
-                'speed':0.2,
+                'speed':0.2 * scale,
                 'morale': 0.1,
                 'damage':3
             },
             'routed':{
-                'speed':0.55,
+                'speed':0.55 * scale,
                 'morale': 0,
                 'damage':0
             }
@@ -55,25 +56,25 @@ export var unitTypes = {
     },
 
     'Swordsman':{
-        'size':6,
+        'size':6 * scale,
         'mStatuses':{
             'charging':{
-                'speed':0.8,
+                'speed':0.8 * scale,
                 'morale': 3,
                 'damage':2
             },
             'advancing':{
-                'speed':0.6,
+                'speed':0.6 * scale,
                 'morale': 1,
                 'damage':1.5
             },
             'retreating':{
-                'speed':0.45,
+                'speed':0.45 * scale,
                 'morale': 0.3,
                 'damage':1
             },
             'routed':{
-                'speed':0.75,
+                'speed':0.75 * scale,
                 'morale': 0,
                 'damage':0
             }
@@ -98,25 +99,25 @@ export var unitTypes = {
     },
 
     'Cossack':{
-        'size':6,
+        'size':8 * scale,
         'mStatuses':{
             'charging':{
-                'speed':1.5,
+                'speed':1.5 * scale,
                 'morale': 1,
                 'damage':2
             },
             'advancing':{
-                'speed':0.75,
+                'speed':0.75 * scale,
                 'morale': 0.4,
                 'damage':1
             },
             'retreating':{
-                'speed':0.6,
+                'speed':0.6 * scale,
                 'morale': 0.35,
                 'damage':0.8
             },
             'routed':{
-                'speed':1,
+                'speed':1 * scale,
                 'morale': 0,
                 'damage':0
             }
@@ -143,25 +144,25 @@ export var unitTypes = {
     },
 
     'Knight':{
-        'size':7,
+        'size':4 * scale,
         'mStatuses':{
             'charging':{
-                'speed':1.2,
+                'speed':1.2 * scale,
                 'morale': 0.65,
                 'damage':6
             },
             'advancing':{
-                'speed':0.65,
+                'speed':0.65 * scale,
                 'morale': 0.6,
                 'damage':3
             },
             'retreating':{
-                'speed':0.45,
+                'speed':0.45 * scale,
                 'morale': 0.3,
                 'damage':1
             },
             'routed':{
-                'speed':0.95,
+                'speed':0.95 * scale,
                 'morale': 0,
                 'damage':0
             }
@@ -186,25 +187,25 @@ export var unitTypes = {
     },
 
     'Crossbowman':{
-        'size':6,
+        'size':8 * scale,
         'mStatuses':{
             'charging':{
-                'speed':0.7,
+                'speed':0.7 * scale,
                 'morale': 3,
                 'damage':1.5
             },
             'advancing':{
-                'speed':0.45,
+                'speed':0.45 * scale,
                 'morale': 0.5,
                 'damage':1.5
             },
             'retreating':{
-                'speed':0.45,
+                'speed':0.45 * scale,
                 'morale': 0.3,
                 'damage':0.5
             },
             'routed':{
-                'speed':0.8,
+                'speed':0.8 * scale,
                 'morale': 0,
                 'damage':0
             }
@@ -228,4 +229,6 @@ export var unitTypes = {
         }
     }
 }
+
+
 

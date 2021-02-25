@@ -1,4 +1,5 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
+import {unitNames, unitTypes} from './unitData.js';
 
 //units and item must have an enemies.inrange and enemies.outofrange lists
 //deals damage to morale and health, manages unit attack preferences
@@ -20,35 +21,29 @@ export default function smartAttack(item, units, offset) {
 
 function addRange(item, units, offset) {
 
-    
 
+    for (let i = 0; i < units.length; i++) {
 
-    for (const team in units) {
-        if (Object.hasOwnProperty.call(units, team)) {
+        var enemy = units[i];
 
-            for (let i = 0; i < units[team].length; i++) {
+        if (item.team != enemy.team) {
 
-                var enemy = units[team][i];
+            var rangeMultiplier = 1.2
 
-                if (item.team != enemy.team) {
+            var distance = dist(item.x, item.y, enemy.x, enemy.y)
+            var maxRange = enemy.size + item.size + offset * rangeMultiplier + unitTypes[item.type].behaviour.range * item.size;
+            var minRange = enemy.size + item.size + offset + unitTypes[item.type].behaviour.minRange * item.size;
 
-                    var rangeMultiplier = 1.2
+            if (distance < minRange) {
+                item.enemies = [];
+                break;
+            
+            } else if (distance <= maxRange && distance >= minRange && item.enemies.includes(enemy) == false) {
+                item.enemies.push(enemy);
 
-                    var distance = dist(item.x, item.y, enemy.x, enemy.y)
-                    var maxRange = enemy.size + item.size + offset * rangeMultiplier + item.behaviour.range * item.size;
-                    var minRange = enemy.size + item.size + offset + item.behaviour.minRange * item.size;
-
-                    if (distance < minRange) {
-                        item.enemies = [];
-                        break;
-                    
-                    } else if (distance <= maxRange && distance >= minRange && item.enemies.includes(enemy) == false) {
-                        item.enemies.push(enemy);
-
-                    }
-                }
             }
         }
+
     }
 
 
@@ -67,7 +62,7 @@ function dealDamage(item) {
     if (item.enemies.length > 0) {
 
         var opponent = item.enemies[Math.floor(Math.random() * item.enemies.length)]
-        var damage = item.mStatuses[item.mStatus].damage * damageMultiplier;
+        var damage = unitTypes[item.type].mStatuses[item.mStatus].damage * damageMultiplier;
 
         opponent.health -= damage;
         opponent.morale -= damage;
@@ -76,9 +71,16 @@ function dealDamage(item) {
 
         if (opponent.health < 0) {
             opponent.delete();
+        } else {
+            recalibrateSize(item)
         }
     }
 
+}
+
+function recalibrateSize(item) {
+
+    item.size = unitTypes[item.type].size * (item.health / 100);
 }
 
 
