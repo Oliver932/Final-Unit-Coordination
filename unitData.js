@@ -35,7 +35,7 @@ export var unitTypes = {
         },
 
         'mMax':300,
-        'hMax':300,
+        'hMax':350,
 
         'formation':{
             'rows':2,
@@ -84,7 +84,7 @@ export var unitTypes = {
 
         'formation':{
             'rows':4,
-            'columns':6
+            'columns':7
         },
 
         'behaviour':{
@@ -127,7 +127,7 @@ export var unitTypes = {
 
         'formation':{
             'rows':2,
-            'columns':6
+            'columns':5
         },
 
         'behaviour':{
@@ -172,7 +172,7 @@ export var unitTypes = {
 
         'formation':{
             'rows':1,
-            'columns':3
+            'columns':5
         },
 
         'behaviour':{
@@ -214,7 +214,7 @@ export var unitTypes = {
         'hMax':60,
 
         'formation':{
-            'rows':6,
+            'rows':5,
             'columns':2
         },
 
@@ -224,8 +224,8 @@ export var unitTypes = {
             'burstPower':5,
             'group':1,
             'flanking':false,
-            'range':3,
-            'minRange':1.5
+            'range':5,
+            'minRange':2
         }
     },
     
@@ -258,7 +258,7 @@ export var unitTypes = {
         'hMax':200,
 
         'formation':{
-            'rows':3,
+            'rows':5,
             'columns':1
         },
 
@@ -268,8 +268,8 @@ export var unitTypes = {
             'burstPower':5,
             'group':1,
             'flanking':false,
-            'range':35,
-            'minRange':12
+            'range':45,
+            'minRange':20
         }
     }
 }

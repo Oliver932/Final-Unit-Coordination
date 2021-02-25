@@ -25,7 +25,8 @@ export default function smartMorale (item, units, offset) {
         }
     }
 
-    item.moraleRatio = (attraction / repulsion) * (item.morale / unitTypes[item.type].mMax);
+    var potentialMorale = (item.morale / unitTypes[item.type].mMax);
+    item.moraleRatio = (attraction / repulsion);
 
 
     calculateMStatus(item);
