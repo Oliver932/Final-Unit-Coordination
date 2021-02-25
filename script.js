@@ -83,6 +83,14 @@ var teamColours = {
     }
 };
 
+var data = {
+    'health': {
+        'Oli':0,
+        'Hazza':0
+    }
+}
+
+
 
 var units = [];
 
@@ -154,9 +162,6 @@ var Unit = function (x, y, team, type) {
             smartMove(this, unitTypes[this.type].mStatuses[this.mStatus].speed, smartTarget(this, units), units, offset);
         }
 
-        this.draw();
-
-
     }
 
     this.delete = function () {
@@ -186,30 +191,85 @@ function createFormation(team, X, Y, type) {
         for (var c = 0; c < columns; c++) {
 
             units.push(new Unit(X + (c * increment), Y + (r * increment), team, type));
-            units[units.length - 1].draw();
-            // console.log(team);
-
 
         }
 
     }
+
+    data.health[team] += rows * columns * unitTypes[type].hMax;
+    drawScreen();
     // pause = 1;
 }
 
+function printData() {
 
+    c.textAlign = "center";
+    c.fillStyle = 'rgba(0, 0, 0, 1)';
+    c.font = "20px Comic Sans MS";
+
+    for (const key in data) {
+        if (Object.hasOwnProperty.call(data, key)) {
+            const element = data[key];
+
+            var length =  Object.keys(element).length
+
+            if (length > 0){
+
+                var split = innerWidth / (length + 1);
+
+                var index = 1
+                for (const team in element) {
+                    if (Object.hasOwnProperty.call(element, team)) {
+
+                        const value = element[team];
+
+                        c.fillText(key + ': ' + value.toString(), split * (index), innerHeight - 60);
+                        index ++;
+                    }
+                    
+                }
+
+
+            }
+            
+        }
+    }
+
+}
+
+
+function drawScreen() {
+    c.fillStyle = 'rgba(255, 255, 255, 1)';
+    c.fillRect(0, 0, innerWidth, innerHeight)
+
+    for (let i = 0; i < units.length; i++) {
+        units[i].draw();
+
+    }
+
+    printData();
+}
 
 var animate = function () {
     requestAnimationFrame(animate);
 
     if (pause == 1) {
 
-        c.fillStyle = 'rgba(255, 255, 255, 1)';
-        c.fillRect(0, 0, innerWidth, innerHeight)
+        data = {
+            'health': {
+                'Oli':0,
+                'Hazza':0
+            }
+        }
+
 
         for (let i = 0; i < units.length; i++) {
             units[i].update();
+            data.health[units[i].team] += units[i].health;
 
         }
+
+        drawScreen();
     }
 }
 

@@ -64,8 +64,8 @@ function dealDamage(item) {
         var opponent = item.enemies[Math.floor(Math.random() * item.enemies.length)]
         var damage = unitTypes[item.type].mStatuses[item.mStatus].damage * damageMultiplier;
 
-        opponent.health -= damage;
-        opponent.morale -= damage;
+        opponent.health = Math.floor(opponent.health - damage);
+        opponent.morale -= Math.floor(opponent.morale - damage);
         
         item.morale += damage / 2
 

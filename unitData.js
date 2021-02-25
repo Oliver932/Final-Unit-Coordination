@@ -1,8 +1,8 @@
 
 // stores all raw unit data and stats
-const scale = 0.7;
+const scale = 0.9;
 
-export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman'];
+export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman', 'Longbowman'];
 
 export var imageClasses = ['L', 'R'];
 
@@ -83,8 +83,8 @@ export var unitTypes = {
         'hMax':100,
 
         'formation':{
-            'rows':3,
-            'columns':5
+            'rows':4,
+            'columns':6
         },
 
         'behaviour':{
@@ -127,7 +127,7 @@ export var unitTypes = {
 
         'formation':{
             'rows':2,
-            'columns':4
+            'columns':6
         },
 
         'behaviour':{
@@ -147,7 +147,7 @@ export var unitTypes = {
         'size':6 * scale,
         'mStatuses':{
             'charging':{
-                'speed':1.2 * scale,
+                'speed':1.4 * scale,
                 'morale': 0.65,
                 'damage':6
             },
@@ -168,11 +168,11 @@ export var unitTypes = {
             }
         },
         'mMax':300,
-        'hMax':200,
+        'hMax':170,
 
         'formation':{
             'rows':1,
-            'columns':4
+            'columns':3
         },
 
         'behaviour':{
@@ -214,7 +214,7 @@ export var unitTypes = {
         'hMax':60,
 
         'formation':{
-            'rows':4,
+            'rows':6,
             'columns':2
         },
 
@@ -226,6 +226,50 @@ export var unitTypes = {
             'flanking':false,
             'range':3,
             'minRange':1.5
+        }
+    },
+    
+
+    'Longbowman':{
+        'size':6 * scale,
+        'mStatuses':{
+            'charging':{
+                'speed':0.3 * scale,
+                'morale': 3,
+                'damage':1.5
+            },
+            'advancing':{
+                'speed':0.25 * scale,
+                'morale': 0.5,
+                'damage':1.5
+            },
+            'retreating':{
+                'speed':0.2 * scale,
+                'morale': 0.3,
+                'damage':0.8
+            },
+            'routed':{
+                'speed':0.3 * scale,
+                'morale': 0,
+                'damage':0
+            }
+        },
+        'mMax':150,
+        'hMax':200,
+
+        'formation':{
+            'rows':3,
+            'columns':1
+        },
+
+        'behaviour':{
+            'straggler':1,
+            'burst':50,
+            'burstPower':5,
+            'group':1,
+            'flanking':false,
+            'range':35,
+            'minRange':12
         }
     }
 }
