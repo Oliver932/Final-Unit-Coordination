@@ -223,7 +223,7 @@ export var unitTypes = {
             'burstPower':5,
             'group':1,
             'flanking':false,
-            'range':2,
+            'range':3,
             'minRange':1.5
         }
     }

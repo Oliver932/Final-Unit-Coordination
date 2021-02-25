@@ -1,7 +1,7 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
 
 // item and individual units require size, x, y, behaviour.range, status, orientation and team properties
-// item and individual units must also have .draw() method
+// item and individual units must also have .delete method
 // modifies angle and travel to ensure both collision avoidance and range retention, moves unit and updates screen
 
 export default function smartMove(item, travel, travelAngle, units, offset) {
@@ -68,12 +68,11 @@ export default function smartMove(item, travel, travelAngle, units, offset) {
         }
 
         doMove(item, angle, newTravel);
+        edgeCheck(item);
 
     } else {
         item.status = 'static';
     }
-
-    item.draw();
 
 }
 
@@ -261,7 +260,7 @@ function withinRange(item, units, offset){
 
                     if (item != opponent) {
 
-                        var distance = item.distance(opponent.x, opponent.y);
+                        var distance = dist(item.x, item.y, opponent.x, opponent.y);
 
                         if (distance - gap <= item.mStatuses[item.mStatus].speed) {
                             obstructions.push(opponent);
@@ -273,3 +272,10 @@ function withinRange(item, units, offset){
         return obstructions;
 
     }
+
+function edgeCheck(item) {
+
+    if (item.x < 0 || item.y < 0 || item.x > innerWidth || item.y > innerHeight) {
+        item.delete();
+    }
+}
