@@ -1,6 +1,6 @@
 
 // stores all raw unit data and stats
-const scale = 0.9;
+const scale = 0.65;
 
 export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman', 'Longbowman'];
 
@@ -83,8 +83,8 @@ export var unitTypes = {
         'hMax':100,
 
         'formation':{
-            'rows':4,
-            'columns':7
+            'rows':3,
+            'columns':5
         },
 
         'behaviour':{
@@ -127,7 +127,7 @@ export var unitTypes = {
 
         'formation':{
             'rows':2,
-            'columns':5
+            'columns':4
         },
 
         'behaviour':{
@@ -153,7 +153,7 @@ export var unitTypes = {
             },
             'advancing':{
                 'speed':0.65 * scale,
-                'morale': 0.6,
+                'morale': 0.35,
                 'damage':3
             },
             'retreating':{
@@ -168,11 +168,11 @@ export var unitTypes = {
             }
         },
         'mMax':300,
-        'hMax':170,
+        'hMax':200,
 
         'formation':{
             'rows':1,
-            'columns':5
+            'columns':4
         },
 
         'behaviour':{
@@ -214,7 +214,7 @@ export var unitTypes = {
         'hMax':60,
 
         'formation':{
-            'rows':5,
+            'rows':4,
             'columns':2
         },
 
@@ -236,7 +236,7 @@ export var unitTypes = {
             'charging':{
                 'speed':0.3 * scale,
                 'morale': 3,
-                'damage':1.5
+                'damage':2
             },
             'advancing':{
                 'speed':0.25 * scale,
@@ -254,11 +254,11 @@ export var unitTypes = {
                 'damage':0
             }
         },
-        'mMax':150,
+        'mMax':120,
         'hMax':200,
 
         'formation':{
-            'rows':5,
+            'rows':4,
             'columns':1
         },
 
@@ -268,8 +268,8 @@ export var unitTypes = {
             'burstPower':5,
             'group':1,
             'flanking':false,
-            'range':45,
-            'minRange':20
+            'range':40,
+            'minRange':6
         }
     }
 }

@@ -66,7 +66,7 @@ window.addEventListener('keydown', function (event) {
     }
 })
 
-const offset = 4;
+const offset = 2;
 
 var images = createImages();
 
@@ -124,11 +124,16 @@ var Unit = function (x, y, team, type) {
 
     this.draw = function () {
 
+        var lineThickness = 0.2;
+
+        var size = (1 - lineThickness) * this.size;
+        var imageSize = size * 0.8
+
         var image = images[this.type][this.orientation];
 
         c.beginPath();
-        c.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
-        c.fillStyle = teamColours[this.team][this.status];
+        c.arc(this.x, this.y, size, 0, 2 * Math.PI);
+        c.fillStyle = teamColours[this.team].moving;
 
         var moraleAdjust = unitTypes[this.type].mStatuses.retreating.morale;
         var difference = this.moraleRatio - moraleAdjust;
@@ -143,13 +148,20 @@ var Unit = function (x, y, team, type) {
         c.globalAlpha = opacity;
         c.fill();
 
+        c.globalAlpha = 1;
+
+        c.strokeStyle = teamColours[this.team][this.status];
+
+        c.lineWidth = this.size * lineThickness
+
+        c.stroke();
+
         var multiplier = -1;
         if (this.orientation == 'R') {
             multiplier = -0.3;
         }
 
-        c.globalAlpha = 1;
-        c.drawImage(image, this.x + (this.size * 3 * multiplier), this.y - this.size * 2, this.size * 4, this.size * 4);
+        c.drawImage(image, this.x + (imageSize * 3 * multiplier), this.y - imageSize * 2, imageSize * 4, imageSize * 4);
     }
 
     this.update = function () {

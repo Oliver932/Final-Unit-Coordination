@@ -3,6 +3,8 @@ import {unitNames, unitTypes} from './unitData.js';
 
 export default function smartMorale (item, units, offset) {
 
+    var modifier = 1.4;
+
     var attraction = 1;
     var repulsion = 1;
 
@@ -26,7 +28,7 @@ export default function smartMorale (item, units, offset) {
     }
 
     var potentialMorale = (item.morale / unitTypes[item.type].mMax);
-    item.moraleRatio = (attraction / repulsion);
+    item.moraleRatio = (attraction / repulsion) * potentialMorale * modifier;
 
 
     calculateMStatus(item);

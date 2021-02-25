@@ -15,7 +15,7 @@ export default function smartAttack(item, units, offset) {
         addRange(item, units, offset);
     }
 
-    dealDamage(item);
+    dealDamage(item, offset);
     item.draw();
 }
 
@@ -55,32 +55,43 @@ function addRange(item, units, offset) {
 
 }
 
-function dealDamage(item) {
+function dealDamage(item, offset) {
 
     var damageMultiplier = 0.35;
 
     if (item.enemies.length > 0) {
 
         var opponent = item.enemies[Math.floor(Math.random() * item.enemies.length)]
-        var damage = unitTypes[item.type].mStatuses[item.mStatus].damage * damageMultiplier;
+
+        var distance = (dist(item.x, item.y, opponent.x, opponent.y) -  (item.size + opponent.size + offset)) / item.size
+        if (distance < 1) {
+            distance = 1;
+        }
+
+        var damage = unitTypes[item.type].mStatuses[item.mStatus].damage * damageMultiplier / (distance ** 2);
 
         opponent.health = Math.floor(opponent.health - damage);
-        opponent.morale -= Math.floor(opponent.morale - damage);
+        opponent.morale = Math.floor(opponent.morale - damage);
         
         item.morale += damage / 2
+
 
         if (opponent.health < 0) {
             opponent.delete();
         } else {
-            recalibrateSize(item)
+            recalibrateSize(opponent)
+
+            if (opponent.morale < 0) {
+                opponent.morale = 0;
+            }
         }
     }
 
 }
 
-function recalibrateSize(item) {
+function recalibrateSize(opponent) {
 
-    item.size = unitTypes[item.type].size * Math.sqrt((item.health / 100));
+    opponent.size = unitTypes[opponent.type].size * Math.sqrt((opponent.health / 100));
 }
 
 
