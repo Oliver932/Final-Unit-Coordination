@@ -80,7 +80,7 @@ function dealDamage(item) {
 
 function recalibrateSize(item) {
 
-    item.size = unitTypes[item.type].size * (item.health / 100);
+    item.size = unitTypes[item.type].size * Math.sqrt((item.health / 100));
 }
 
 

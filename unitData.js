@@ -1,6 +1,6 @@
 
 // stores all raw unit data and stats
-const scale = 0.75;
+const scale = 0.7;
 
 export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman'];
 
@@ -9,7 +9,7 @@ export var imageClasses = ['L', 'R'];
 export var unitTypes = {
     'Longswordsman':{
 
-        'size':4 * scale,
+        'size':6 * scale,
 
         'mStatuses':{
             'charging':{
@@ -99,7 +99,7 @@ export var unitTypes = {
     },
 
     'Cossack':{
-        'size':8 * scale,
+        'size':6 * scale,
         'mStatuses':{
             'charging':{
                 'speed':1.5 * scale,
@@ -144,7 +144,7 @@ export var unitTypes = {
     },
 
     'Knight':{
-        'size':4 * scale,
+        'size':6 * scale,
         'mStatuses':{
             'charging':{
                 'speed':1.2 * scale,
@@ -187,7 +187,7 @@ export var unitTypes = {
     },
 
     'Crossbowman':{
-        'size':8 * scale,
+        'size':6 * scale,
         'mStatuses':{
             'charging':{
                 'speed':0.7 * scale,

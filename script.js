@@ -72,16 +72,17 @@ var images = createImages();
 
 var teamColours = {
     'Oli': {
-        'moving': '#00fff3',
+        'moving': '#007dff',
         'static': '#007dff',
         'engaged': '#0200b9'
     },
     'Hazza': {
-        'moving': '#ec9b00',
+        'moving': '#ec5300',
         'static': '#ec5300',
         'engaged': '#8b0000'
     }
 };
+
 
 var units = [];
 
@@ -96,7 +97,7 @@ var Unit = function (x, y, team, type) {
     this.morale = unitTypes[type].mMax;
     this.health = unitTypes[type].hMax;
 
-    this.size =  unitTypes[type].size * (this.health / 100);
+    this.size =  unitTypes[type].size * Math.sqrt((this.health / 100));
 
 
     this.status = 'moving';
@@ -120,6 +121,18 @@ var Unit = function (x, y, team, type) {
         c.beginPath();
         c.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
         c.fillStyle = teamColours[this.team][this.status];
+
+        var moraleAdjust = unitTypes[this.type].mStatuses.retreating.morale;
+        var difference = this.moraleRatio - moraleAdjust;
+        var opacity = 1
+
+        if (difference  < 0) {
+            opacity = 0
+        } else {
+            opacity = (difference)/(1 - moraleAdjust);
+        }
+
+        c.globalAlpha = opacity;
         c.fill();
 
         var multiplier = -1;
@@ -127,6 +140,7 @@ var Unit = function (x, y, team, type) {
             multiplier = -0.3;
         }
 
+        c.globalAlpha = 1;
         c.drawImage(image, this.x + (this.size * 3 * multiplier), this.y - this.size * 2, this.size * 4, this.size * 4);
     }
 
@@ -167,7 +181,7 @@ function createFormation(team, X, Y, type) {
     var columns = unitTypes[type].formation.columns;
     // pause = -1;
 
-    var increment = (unitTypes[type].size * 2 * (unitTypes[type].hMax / 100)) + offset + 2;
+    var increment = (unitTypes[type].size * 2 * Math.sqrt(unitTypes[type].hMax / 100)) + offset + 2;
     for (var r = 0; r < rows; r++) {
         for (var c = 0; c < columns; c++) {
 
