@@ -239,6 +239,8 @@ function doMove(item, angle, travel) {
     item.x += dx
     item.y += dy
 
+    item.lastMove = travel;
+
 }
 
 function withinRange(item, units){

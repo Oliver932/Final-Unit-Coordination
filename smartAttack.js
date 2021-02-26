@@ -69,18 +69,18 @@ function dealDamage(item) {
             distance = 1;
         }
 
-        var damage = unitTypes[item.type].mStatuses[item.mStatus].damage * damageMultiplier / (distance ** 2);
+        var damage = unitTypes[item.type].mStatuses[item.mStatus].damage * damageMultiplier * (((item.lastMove / opponent.size) * 100 + 1))/ ((distance ** 2) * (((opponent.lastMove / item.size) * 100 + 1)));
 
         opponent.health = Math.floor(opponent.health - damage);
         opponent.morale = Math.floor(opponent.morale - damage);
         
-        item.morale += damage / 2
+        // item.morale += damage / 2
 
 
         if (opponent.health < 0) {
             opponent.delete();
         } else {
-            recalibrateSize(opponent)
+            // recalibrateSize(opponent)
 
             if (opponent.morale < 0) {
                 opponent.morale = 0;

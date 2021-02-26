@@ -231,7 +231,7 @@ export var unitTypes = {
     
 
     'Trebuchet':{
-        'size':8 * scale,
+        'size':6 * scale,
         'mStatuses':{
             'charging':{
                 'speed':0.3 * scale,

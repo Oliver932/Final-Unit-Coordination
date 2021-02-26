@@ -12,11 +12,13 @@ var images = createImages();
 
 var teamColours = {
     'Oli': {
+        'internal':'#00ffef',
         'moving': '#007dff',
         'static': '#007dff',
         'engaged': '#0200b9'
     },
     'Hazza': {
+        'internal':'#ffcf40',
         'moving': '#ec5300',
         'static': '#ec5300',
         'engaged': '#8b0000'
@@ -24,7 +26,6 @@ var teamColours = {
 };
 
 export var units = [];
-
 export class Unit {
     constructor(x, y, team, type) {
 
@@ -45,6 +46,7 @@ export class Unit {
         this.moraleRatio = 1;
 
         this.enemies = [];
+        this.lastMove = 0;
 
         if (team == 'Oli') {
             this.orientation = 'R';
@@ -55,16 +57,16 @@ export class Unit {
 
     draw () {
 
-        var lineThickness = 0.2;
+        var lineThickness = 0.25 * (this.health / unitTypes[this.type].hMax);
 
         var size = (1 - lineThickness) * this.size;
-        var imageSize = size * 0.8;
+        var imageSize = this.size * 0.7;
 
         var image = images[this.type][this.orientation];
 
         c.beginPath();
         c.arc(this.x, this.y, size, 0, 2 * Math.PI);
-        c.fillStyle = teamColours[this.team].moving;
+        c.fillStyle = teamColours[this.team].internal;
 
         var moraleAdjust = unitTypes[this.type].mStatuses.retreating.morale;
         var difference = this.moraleRatio - moraleAdjust;
