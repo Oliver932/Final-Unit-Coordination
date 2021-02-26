@@ -1,8 +1,8 @@
+import {scale, offset} from './Settings.js';
 
 // stores all raw unit data and stats
-const scale = 0.65;
 
-export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman', 'Longbowman'];
+export var unitNames = ['Swordsman', 'Longswordsman', 'Cossack', 'Knight', 'Crossbowman', 'Trebuchet'];
 
 export var imageClasses = ['L', 'R'];
 
@@ -230,8 +230,8 @@ export var unitTypes = {
     },
     
 
-    'Longbowman':{
-        'size':6 * scale,
+    'Trebuchet':{
+        'size':8 * scale,
         'mStatuses':{
             'charging':{
                 'speed':0.3 * scale,

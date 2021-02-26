@@ -1,10 +1,11 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
 import {unitNames, unitTypes} from './unitData.js';
+import {scale, offset} from './Settings.js';
 
 //units and item must have an enemies.inrange and enemies.outofrange lists
 //deals damage to morale and health, manages unit attack preferences
 
-export default function smartAttack(item, units, offset) {
+export default function smartAttack(item, units) {
 
     item.enemies = []
     item.status = 'moving';
@@ -12,14 +13,14 @@ export default function smartAttack(item, units, offset) {
 
     if (item.mStatus != 'routed') {
 
-        addRange(item, units, offset);
+        addRange(item, units);
     }
 
-    dealDamage(item, offset);
+    dealDamage(item);
     item.draw();
 }
 
-function addRange(item, units, offset) {
+function addRange(item, units) {
 
 
     for (let i = 0; i < units.length; i++) {
@@ -55,7 +56,7 @@ function addRange(item, units, offset) {
 
 }
 
-function dealDamage(item, offset) {
+function dealDamage(item) {
 
     var damageMultiplier = 0.35;
 

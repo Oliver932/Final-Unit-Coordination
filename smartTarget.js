@@ -1,5 +1,6 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
 import {unitNames, unitTypes} from './unitData.js';
+import {scale, offset} from './Settings.js';
 
 export default function smartTarget(item, units) {
 

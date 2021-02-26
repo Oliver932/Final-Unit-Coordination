@@ -1,16 +1,17 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
 import {unitNames, unitTypes} from './unitData.js';
+import {scale, offset} from './Settings.js';
 
 // item and individual units require size, x, y, behaviour.range, status, orientation and team properties
 // item and individual units must also have .delete method
 // modifies angle and travel to ensure both collision avoidance and range retention, moves unit and updates screen
 
-export default function smartMove(item, travel, travelAngle, units, offset) {
+export default function smartMove(item, travel, travelAngle, units) {
 
     if (travelAngle != undefined) {
 
 
-        var objects = withinRange(item, units, offset);
+        var objects = withinRange(item, units);
 
         var directions = ['CW', 'ACW'];
         var direction = directions[Math.round(Math.random())];
@@ -26,7 +27,7 @@ export default function smartMove(item, travel, travelAngle, units, offset) {
             while (Math.abs(angleAdjustment) < Math.PI * 2 && resolve == false) {
 
 
-                var data = moderateAngle(item, travel, angle, objects, false, offset, direction);
+                var data = moderateAngle(item, travel, angle, objects, false, direction);
 
 
                 angleAdjustment += data.angleAdjustment;
@@ -47,7 +48,7 @@ export default function smartMove(item, travel, travelAngle, units, offset) {
                 while (Math.abs(angleAdjustment) < Math.PI * 2 && resolve == false) {
 
 
-                    var data = moderateAngle(item, travel, angle, objects, true, offset, direction);
+                    var data = moderateAngle(item, travel, angle, objects, true, direction);
 
 
                     angleAdjustment += data.angleAdjustment;
@@ -77,7 +78,7 @@ export default function smartMove(item, travel, travelAngle, units, offset) {
 
 }
 
-function moderateAngle(item, travel, travelAngle, objects, restrict, offset, direction){
+function moderateAngle(item, travel, travelAngle, objects, restrict, direction){
 
     var angleAdjustment = 0;
     var newTravel = travel;
@@ -240,7 +241,7 @@ function doMove(item, angle, travel) {
 
 }
 
-function withinRange(item, units, offset){
+function withinRange(item, units){
 
 
     var obstructions = [];

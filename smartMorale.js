@@ -1,9 +1,10 @@
 import {dist} from './vectorFunctions.js';
 import {unitNames, unitTypes} from './unitData.js';
+import {scale, offset} from './Settings.js';
 
-export default function smartMorale (item, units, offset) {
+export default function smartMorale (item, units) {
 
-    var modifier = 1.4;
+    var modifier = 2;
 
     var attraction = 1;
     var repulsion = 1;
@@ -14,7 +15,7 @@ export default function smartMorale (item, units, offset) {
 
         if (object != item) {
 
-            var moraleModifier = calculateMorale(item, object, offset);
+            var moraleModifier = calculateMorale(item, object);
 
             if (object.team == item.team) {
 
@@ -55,7 +56,7 @@ function calculateMStatus(item) {
     }
 }
 
-function calculateMorale(item, object, offset) {
+function calculateMorale(item, object) {
 
     var distance = dist(item.x, item.y, object.x, object.y);
 
