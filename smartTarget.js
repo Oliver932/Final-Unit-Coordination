@@ -1,6 +1,6 @@
 import {dist, checkAngle, vectorToAngle, angleBetween, angleRange, angleToVector} from './vectorFunctions.js';
 import {unitNames, unitTypes} from './unitData.js';
-import {scale, offset} from './Settings.js';
+import {scale, offset, frame} from './Settings.js';
 
 export default function smartTarget(item, units) {
 
@@ -13,11 +13,29 @@ export default function smartTarget(item, units) {
         var dy = target.y - item.y;
 
         angle = retreatCheck(item, vectorToAngle(dx, dy));
+        angle = changeCurrentAngle(item, angle);
     }
+
+    item.currentAngle = angle;
 
     return angle;
 
 
+}
+
+function changeCurrentAngle(item, angle) {
+
+    if (item.currentAngle != undefined && item.currentAngle != angle){
+
+        var turningVelocity = (unitTypes[item.type].behaviour.turningVelocity /(100 * frame)) * Math.PI * 2;
+        var fullAngle = angleBetween(angle, item.currentAngle);
+
+        if (fullAngle.angle > turningVelocity) {
+            angle = item.currentAngle + (fullAngle.sign * turningVelocity);
+        } 
+    }
+
+    return angle
 }
 
 function getClosest(item, units) {

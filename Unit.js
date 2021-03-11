@@ -48,6 +48,9 @@ export class Unit {
         this.enemies = [];
         this.lastMove = 0;
 
+        this.currentAngle = undefined;
+
+
         if (team == 'Oli') {
             this.orientation = 'R';
         } else {
@@ -57,15 +60,21 @@ export class Unit {
 
     draw () {
 
-        var lineThickness = 0.25 * (this.health / unitTypes[this.type].hMax);
+        // setup
 
-        var size = (1 - lineThickness) * this.size;
+        var directionRange = Math.PI / 4;
+
+        var directionThickness = 0.35;
+        var lineThickness = 0.15 * (this.health / unitTypes[this.type].hMax);
+
         var imageSize = this.size * 0.7;
 
         var image = images[this.type][this.orientation];
 
+        // morale circle
+
         c.beginPath();
-        c.arc(this.x, this.y, size, 0, 2 * Math.PI);
+        c.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
         c.fillStyle = teamColours[this.team].internal;
 
         var moraleAdjust = unitTypes[this.type].mStatuses.retreating.morale;
@@ -82,12 +91,49 @@ export class Unit {
         c.fill();
 
         c.globalAlpha = 1;
+        c.beginPath();
 
-        c.strokeStyle = teamColours[this.team][this.status];
+        if (this.currentAngle != undefined){
 
-        c.lineWidth = this.size * lineThickness;
+            // health circle portion
 
-        c.stroke();
+            var directionAngle = this.currentAngle - Math.PI / 2;
+            
+            c.arc(this.x, this.y, this.size- (this.size * lineThickness / 2), directionAngle + directionRange, directionAngle - directionRange);
+
+            c.strokeStyle = teamColours[this.team][this.status];
+
+            c.lineWidth = this.size * lineThickness;
+
+            c.stroke();
+
+            // direction circle portion
+
+
+            c.beginPath();
+            c.arc(this.x, this.y, this.size - (this.size * directionThickness / 2), directionAngle - directionRange, directionAngle + directionRange);
+
+
+            c.strokeStyle = teamColours[this.team][this.status];
+
+            c.lineWidth = this.size * directionThickness;
+
+            c.stroke();
+
+        } else {
+
+            // health circle full
+            
+            c.arc(this.x, this.y, this.size- (this.size * lineThickness / 2), 0, 2 * Math.PI);
+
+            c.strokeStyle = teamColours[this.team][this.status];
+
+            c.lineWidth = this.size * lineThickness;
+
+            c.stroke();
+        }
+
+        // image
 
         var multiplier = -1;
         if (this.orientation == 'R') {

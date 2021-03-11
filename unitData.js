@@ -50,7 +50,8 @@ export var unitTypes = {
             'group':1,
             'flanking':false,
             'range':0,
-            'minRange':0
+            'minRange':0,
+            'turningVelocity':20
 
         }
     },
@@ -94,7 +95,8 @@ export var unitTypes = {
             'group':1,
             'flanking':false,
             'range':0,
-            'minRange':0
+            'minRange':0,
+            'turningVelocity':35
         }
     },
 
@@ -139,7 +141,8 @@ export var unitTypes = {
             'flankDist':15,
             'flankAngle': 1,
             'range':0,
-            'minRange':0
+            'minRange':0,
+            'turningVelocity':60
         }
     },
 
@@ -182,7 +185,8 @@ export var unitTypes = {
             'group':1,
             'flanking':false,
             'range':0,
-            'minRange':0
+            'minRange':0,
+            'turningVelocity':50
         },
     },
 
@@ -225,7 +229,8 @@ export var unitTypes = {
             'group':1,
             'flanking':false,
             'range':5,
-            'minRange':2
+            'minRange':2,
+            'turningVelocity':30
         }
     },
     
@@ -269,7 +274,8 @@ export var unitTypes = {
             'group':1,
             'flanking':false,
             'range':40,
-            'minRange':6
+            'minRange':6,
+            'turningVelocity':8
         }
     }
 }

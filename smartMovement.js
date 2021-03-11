@@ -13,8 +13,14 @@ export default function smartMove(item, travel, travelAngle, units) {
 
         var objects = withinRange(item, units);
 
-        var directions = ['CW', 'ACW'];
-        var direction = directions[Math.round(Math.random())];
+        // var directions = ['CW', 'ACW'];
+        // var direction = directions[Math.round(Math.random())];
+
+        var direction = 'CW';
+
+        if ((travelAngle >= Math.PI * 0.5 && travelAngle < Math.PI * 1) || (travelAngle <= Math.PI * 2 && travelAngle > Math.PI * 1.5)){
+            direction = 'ACW';
+        }
 
         var angleAdjustment = 0;
         var angle = travelAngle;
@@ -240,6 +246,7 @@ function doMove(item, angle, travel) {
     item.y += dy
 
     item.lastMove = travel;
+    
 
 }
 
@@ -277,7 +284,7 @@ function withinRange(item, units){
 
 function edgeCheck(item) {
 
-    if (item.x < 0 || item.y < 0 || item.x > innerWidth || item.y > innerHeight) {
+    if ((item.x < 0 || item.y < 0 || item.x > innerWidth || item.y > innerHeight) && (item.mStatus == 'retreating' || item.mStatus == 'routed')) {
         item.delete();
     }
 }
